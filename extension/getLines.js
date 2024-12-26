@@ -1,5 +1,5 @@
 let prevPicked = [];
-let prevPayout = [];
+let prevPayout = null;
 function arraysEqual(a, b) {
     if (a === b) return true;
     if (a == null || b == null) return false;
@@ -26,7 +26,7 @@ const mutationObserver = new MutationObserver(() => {
     if (!selectedPayout) return;
 
     const parlay = [];
-    if (arraysEqual(prevPicked, picked) && arraysEqual(selectedPayout, prevPayout)) return;
+    if (arraysEqual(prevPicked, picked) && selectedPayout === prevPayout) return;
     for (const pick of picked) {
         const name = pick.querySelector('h3').innerHTML;
         const projection = pick.querySelector('.projected-score>.score').textContent;
