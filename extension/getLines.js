@@ -29,22 +29,24 @@ const mutationObserver = new MutationObserver(() => {
 
         leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType]}
 
-        const res =  fetch("http://127.0.0.1:5000/checkLine", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(leg_obj)
-        }).then(res =>{
-            return res.json();
-        }).then(data => {
-            console.log(data);
-            parlay.push({...leg_obj, ...data});
-            const proj = document.createElement("div");
-            proj.textContent = `${Math.round((data["percentage"] + Number.EPSILON) * 100) / 100}% (${data["hit"]}/${data["games"]})`;
-            proj.classList.add('selected');
-            pick.append(proj);
-        });
+        if (!pick.querySelector(".hitrate-pickpocket")){
+            const res =  fetch("http://127.0.0.1:5000/checkLine", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(leg_obj)
+            }).then(res =>{
+                return res.json();
+            }).then(data => {
+                // console.log(data);
+                parlay.push({...leg_obj, ...data});
+                const proj = document.createElement("div");
+                proj.textContent = `${Math.round((data["percentage"] + Number.EPSILON) * 100) / 100}% (${data["hit"]}/${data["games"]})`;
+                proj.classList.add('selected', 'hitrate-pickpocket');
+                pick.append(proj);
+            });
+        }
     }
     
     const hitCounts = [...selectedPayout.querySelectorAll("span.player-count")].map(element => element.textContent.split(" ")[0]);
