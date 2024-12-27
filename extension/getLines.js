@@ -20,6 +20,7 @@ const mutationObserver = new MutationObserver(() => {
     if (!selectedPayout) return;
 
     const parlay = [];
+    const hitOddsPromises = [];
     if (arraysEqual(prevPicked, picked) && selectedPayout === prevPayout) return;
     for (const pick of picked) {
         const name = pick.querySelector('h3').innerHTML;
@@ -29,40 +30,68 @@ const mutationObserver = new MutationObserver(() => {
 
         leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType]}
 
-        if (!pick.querySelector(".hitrate-pickpocket")){
-            const res =  fetch("http://127.0.0.1:5000/checkLine", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(leg_obj)
-            }).then(res =>{
-                return res.json();
-            }).then(data => {
-                // console.log(data);
-                parlay.push({...leg_obj, ...data});
+        const fetchProm =  fetch("http://127.0.0.1:5000/checkLine", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(leg_obj)
+        }).then(res =>{
+            return res.json();
+        }).then(data => {
+            // console.log(data);
+            parlay.push({...leg_obj, ...data});
+            if (!pick.querySelector(".hitrate-pickpocket")){
                 const proj = document.createElement("div");
                 proj.textContent = `${Math.round((data["percentage"] + Number.EPSILON) * 100) / 100}% (${data["hit"]}/${data["games"]})`;
                 proj.classList.add('selected', 'hitrate-pickpocket');
                 pick.append(proj);
-            });
-        }
-    }
-    
-    const hitCounts = [...selectedPayout.querySelectorAll("span.player-count")].map(element => element.textContent.split(" ")[0]);
-    const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => element.textContent.split("X")[0]);
-    // console.log(hitCounts);
-    // console.log(payouts);
-    payoutPairs = [];
-    for (let i=0; i<hitCounts.length; i++) {
-        payoutPairs.push({"numCorrect": parseInt(hitCounts[i]), "payoutMultiplier": parseFloat(payouts[i])});
-    }
-    hitRates =[]
+            }
+            return data["percentage"]/100;
+        });
 
-    // TODO: USE PAYOUTS TO CALC EV
-    
-    prevPicked = picked;
-    prevPayout = selectedPayout;
+        hitOddsPromises.push(fetchProm);
+    }
+
+    Promise.all(hitOddsPromises).then(hitOdds => {
+        const hitCounts = [...selectedPayout.querySelectorAll("span.player-count")].map(element => element.textContent.split(" ")[0]);
+        const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => element.textContent.split("X")[0]);
+        // console.log(hitCounts);
+        // console.log(payouts);
+        // console.log(hitOdds);
+        payoutPairs = [];
+        for (let i=0; i<hitCounts.length; i++) {
+            payoutPairs.push({"numCorrect": parseInt(hitCounts[i]), "payoutMultiplier": parseFloat(payouts[i])});
+        }
+        
+        const x = Math.max(...hitCounts);
+        const probForNumHits = [];
+        for (let i = 0; i < x+1; i++){
+            probForNumHits.push(0);
+        }
+        // console.log(probForNumHits)
+        for (let i = 0; i < (2**x); i++) {
+            let bitshit = i >>> 0; // convert to unsigned integer
+            let hits = 0;
+            let currentProb = 1;
+            for (let j = 0; j < x; j++) {
+                if (bitshit & 1) {
+                    currentProb *= hitOdds[j];
+                    hits++;
+                }
+                else {
+                    currentProb *= (1-hitOdds[j])
+                }
+                bitshit >>>= 1
+            }
+            // console.log(currentProb)
+            probForNumHits[hits] += currentProb;
+        }
+        // console.log(probForNumHits);
+        
+        prevPicked = picked;
+        prevPayout = selectedPayout;
+    })
 })
 
 // console.log("pickpocket active");
