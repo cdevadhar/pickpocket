@@ -22,13 +22,9 @@ for player in all_players:
         accented_players[no_accents] = player['full_name']
 
 
-@app.route('/checkLine', methods=['POST'])
-def process_json():
+def process_line(data):
     try:
         # Get the JSON payload. Expects player, statType, line
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No JSON provided"}), 400
         playerName = data['player']
         if (playerName in accented_players):
             playerName = accented_players[playerName]
@@ -42,8 +38,44 @@ def process_json():
         elif (statType=='PRA'):
             stats = pra.sum(axis=1)
         hitLine = stats>float(data['line'])
-        return jsonify({"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0] * 100)})
+        return {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0])}
 
+    except Exception as e:
+        print(e)
+        return {"error": str(e)}
+    
+@app.route('/checkParlay', methods=['POST'])
+def process_parlay():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON provided"}), 400
+        parlay = data["parlay"]
+        probabilities = []
+        for pick in parlay:
+            processed_pick = process_line(pick)
+            probabilities.append(processed_pick)
+        print(probabilities)
+        payouts = data["payouts"]
+        ev = 0
+        for i in range(0, 2**len(probabilities)):
+            bitshit = i
+            hits = 0
+            currentProb = 1
+            for j in range (0, len(probabilities)):
+                if (bitshit & 1):
+                    currentProb = currentProb * probabilities[j]['percentage']
+                    hits+=1
+                else:
+                    currentProb = currentProb * (1-probabilities[j]['percentage'])
+                bitshit = bitshit >> 1
+            index = len(probabilities)-hits
+            if (index>=len(payouts)):
+                ev-=currentProb
+            else:
+                ev+=currentProb*payouts[index]
+            print({"hits": hits, "probability": currentProb})
+        return {"probabilities": probabilities, "ev": ev}
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 500
