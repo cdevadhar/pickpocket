@@ -25,8 +25,8 @@ for player in all_players:
 def process_line(data):
     try:
         # Get the JSON payload. Expects player, statType, line
-        print(data)
-        print("requesting")
+        # print(data)
+        # print("requesting")
         playerName = data['player']
         if (playerName in accented_players):
             playerName = accented_players[playerName]
@@ -57,7 +57,7 @@ def process_parlay():
         for pick in parlay:
             processed_pick = process_line(pick)
             probabilities.append(processed_pick)
-        print(probabilities)
+        # print(probabilities)
         payouts = data["payouts"]
         ev = 0
         for i in range(0, 2**len(probabilities)):
@@ -74,7 +74,7 @@ def process_parlay():
             index = len(probabilities)-hits
             if (index<len(payouts)):
                 ev+=currentProb*payouts[index]
-            print({"hits": hits, "probability": currentProb})
+            # print({"hits": hits, "probability": currentProb})
         return {"probabilities": probabilities, "ev": ev}
     except Exception as e:
         print(e)

@@ -33,8 +33,8 @@ const mutationObserver = new MutationObserver(() => {
     }
 
     const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0]));
-    console.log(parlay);
-    console.log(payouts);
+    // console.log(parlay);
+    // console.log(payouts);
     const parlayObj = {"parlay": parlay, "payouts": payouts};
     fetch("http://127.0.0.1:5000/checkParlay", {
         method: "POST",
@@ -45,7 +45,7 @@ const mutationObserver = new MutationObserver(() => {
     }).then((res) => {
         return res.json();
     }).then(data => {
-        console.log(data);
+        // console.log(data);
         const probs = data['probabilities'];
         for (let i=0; i<picked.length; i++) {
             const prob = probs[i];
@@ -59,7 +59,7 @@ const mutationObserver = new MutationObserver(() => {
         let ev = payoutArea.querySelector(".expected-value");
         if (ev) ev.remove();
         ev = document.createElement("div");
-        ev.textContent = `Expected value: ${data['ev']}`
+        ev.textContent = `Expected Value: ${data['ev']}`
         ev.classList.add("expected-value");
         payoutArea.append(ev);
        
