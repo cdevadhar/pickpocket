@@ -25,6 +25,8 @@ for player in all_players:
 def process_line(data):
     try:
         # Get the JSON payload. Expects player, statType, line
+        print(data)
+        print("requesting")
         playerName = data['player']
         if (playerName in accented_players):
             playerName = accented_players[playerName]
@@ -70,9 +72,7 @@ def process_parlay():
                     currentProb = currentProb * (1-probabilities[j]['percentage'])
                 bitshit = bitshit >> 1
             index = len(probabilities)-hits
-            if (index>=len(payouts)):
-                ev-=currentProb
-            else:
+            if (index<len(payouts)):
                 ev+=currentProb*payouts[index]
             print({"hits": hits, "probability": currentProb})
         return {"probabilities": probabilities, "ev": ev}

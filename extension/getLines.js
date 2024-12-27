@@ -29,69 +29,44 @@ const mutationObserver = new MutationObserver(() => {
         // console.log(name+" "+projection + " "+statType);
 
         const leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType]}
-
-        const fetchProm =  fetch("http://127.0.0.1:5000/checkLine", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(leg_obj)
-        }).then(res =>{
-            return res.json();
-        }).then(data => {
-            // console.log(data);
-            parlay.push({...leg_obj, ...data});
-            if (!pick.querySelector(".hitrate-pickpocket")){
-                const proj = document.createElement("div");
-                proj.textContent = `${Math.round((data["percentage"] + Number.EPSILON) * 100) / 100}% (${data["hit"]}/${data["games"]})`;
-                proj.classList.add('selected', 'hitrate-pickpocket');
-                pick.append(proj);
-            }
-            return data["percentage"]/100;
-        }).catch(err => {console.log(err)});
-
-        hitOddsPromises.push(fetchProm);
+        parlay.push(leg_obj);
     }
 
-    Promise.all(hitOddsPromises).then(hitOdds => {
-        const hitCounts = [...selectedPayout.querySelectorAll("span.player-count")].map(element => element.textContent.split(" ")[0]);
-        const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => element.textContent.split("X")[0]);
-        // console.log(hitCounts);
-        // console.log(payouts);
-        // console.log(hitOdds);
-        payoutPairs = [];
-        for (let i=0; i<hitCounts.length; i++) {
-            payoutPairs.push({"numCorrect": parseInt(hitCounts[i]), "payoutMultiplier": parseFloat(payouts[i])});
-        }
-        
-        const x = Math.max(...hitCounts);
-        const probForNumHits = [];
-        for (let i = 0; i < x+1; i++){
-            probForNumHits.push(0);
-        }
-        // console.log(probForNumHits)
-        for (let i = 0; i < (2**x); i++) {
-            let bitshit = i >>> 0; // convert to unsigned integer
-            let hits = 0;
-            let currentProb = 1;
-            for (let j = 0; j < x; j++) {
-                if (bitshit & 1) {
-                    currentProb *= hitOdds[j];
-                    hits++;
-                }
-                else {
-                    currentProb *= (1-hitOdds[j])
-                }
-                bitshit >>>= 1
+    const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0]));
+    console.log(parlay);
+    console.log(payouts);
+    const parlayObj = {"parlay": parlay, "payouts": payouts};
+    fetch("http://127.0.0.1:5000/checkParlay", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(parlayObj)
+    }).then((res) => {
+        return res.json();
+    }).then(data => {
+        console.log(data);
+        const probs = data['probabilities'];
+        for (let i=0; i<picked.length; i++) {
+            const prob = probs[i];
+            if (!picked[i].querySelector(".hitrate-pickpocket")){
+                const proj = document.createElement("div");
+                proj.textContent = `${Math.round((prob["percentage"] + Number.EPSILON) * 100)}% (${prob["hit"]}/${prob["games"]})`;
+                proj.classList.add('selected', 'hitrate-pickpocket');
+                picked[i].append(proj);
             }
-            // console.log(currentProb)
-            probForNumHits[hits] += currentProb;
         }
-        // console.log(probForNumHits);
-        
-        prevPicked = picked;
-        prevPayout = selectedPayout;
+        let ev = payoutArea.querySelector(".expected-value");
+        if (ev) ev.remove();
+        ev = document.createElement("div");
+        ev.textContent = `Expected value: ${data['ev']}`
+        ev.classList.add("expected-value");
+        payoutArea.append(ev);
+       
+       
     })
+    prevPicked = picked;
+    prevPayout = selectedPayout;
 })
 
 // console.log("pickpocket active");
