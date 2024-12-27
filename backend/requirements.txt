@@ -1,3 +1,4 @@
 nba_api
 flask
 pandas
+flask-cors

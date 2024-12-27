@@ -2,8 +2,10 @@ from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 import unicodedata
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 def has_accent(word):
     normalized = unicodedata.normalize('NFD', word)
@@ -23,7 +25,7 @@ for player in all_players:
 @app.route('/checkLine', methods=['POST'])
 def process_json():
     try:
-        # Get the JSON payload
+        # Get the JSON payload. Expects player, statType, line
         data = request.get_json()
         if not data:
             return jsonify({"error": "No JSON provided"}), 400
@@ -39,7 +41,7 @@ def process_json():
             stats = pra[data['statType']]
         elif (statType=='PRA'):
             stats = pra.sum(axis=1)
-        hitLine = stats>data['line']
+        hitLine = stats>float(data['line'])
         return jsonify({"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0] * 100)})
 
     except Exception as e:
