@@ -48,7 +48,7 @@ const mutationObserver = new MutationObserver(() => {
                 pick.append(proj);
             }
             return data["percentage"]/100;
-        });
+        }).catch(err => {console.log(err)});
 
         hitOddsPromises.push(fetchProm);
     }
