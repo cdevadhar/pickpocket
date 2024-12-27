@@ -10,7 +10,7 @@ function arraysEqual(a, b) {
     return true;
 }
 
-statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Pts+Rebs+Asts": "PRA"}
+const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Pts+Rebs+Asts": "PRA"}
 
 const mutationObserver = new MutationObserver(() => {
     const picked = document.querySelectorAll('li.entry-prediction .player');
@@ -28,7 +28,7 @@ const mutationObserver = new MutationObserver(() => {
         const statType = pick.querySelectorAll('.projected-score>div')[1].children[0].innerHTML;
         // console.log(name+" "+projection + " "+statType);
 
-        leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType]}
+        const leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType]}
 
         const fetchProm =  fetch("http://127.0.0.1:5000/checkLine", {
             method: "POST",
