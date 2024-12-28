@@ -1,5 +1,5 @@
 let prevPicked = [];
-let prevPayout = null;
+let prevPayouts = [];
 function arraysEqual(a, b) {
     if (a === b) return true;
     if (a == null || b == null) return false;
@@ -18,10 +18,13 @@ const mutationObserver = new MutationObserver(() => {
     if (!payoutArea) return;
     const selectedPayout = payoutArea.querySelector("button.selected");
     if (!selectedPayout) return;
-
+    const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0]));
+    if (payouts.length==0) {
+        return;
+    }
     const parlay = [];
-    const hitOddsPromises = [];
-    if (arraysEqual(prevPicked, picked) && selectedPayout === prevPayout) return;
+    if (arraysEqual(prevPicked, picked) && arraysEqual(payouts, prevPayouts)) return;
+    console.log(selectedPayout);
     for (const pick of picked) {
         const name = pick.querySelector('h3').innerHTML;
         const projection = pick.querySelector('.projected-score>.score').textContent;
@@ -32,7 +35,7 @@ const mutationObserver = new MutationObserver(() => {
         parlay.push(leg_obj);
     }
 
-    const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0]));
+    
     // console.log(parlay);
     // console.log(payouts);
     const parlayObj = {"parlay": parlay, "payouts": payouts};
@@ -136,7 +139,7 @@ const mutationObserver = new MutationObserver(() => {
         analytics.append(wr);
     })
     prevPicked = picked;
-    prevPayout = selectedPayout;
+    prevPayouts = payouts;
 })
 
 // console.log("pickpocket active");
