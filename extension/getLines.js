@@ -10,7 +10,7 @@ function arraysEqual(a, b) {
     return true;
 }
 
-const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Pts+Rebs+Asts": "PRA"}
+const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M"}
 
 const mutationObserver = new MutationObserver(() => {
     const picked = document.querySelectorAll('li.entry-prediction .player');
