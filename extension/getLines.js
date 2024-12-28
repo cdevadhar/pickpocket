@@ -31,7 +31,7 @@ const mutationObserver = new MutationObserver(() => {
         return;
     }
     const parlay = [];
-    console.log(selectedPayout);
+    // console.log(selectedPayout);
     for (const pick of picked) {
         const name = pick.querySelector('h3').innerHTML;
         const projection = pick.querySelector('.projected-score>.score').textContent;
