@@ -35,7 +35,6 @@ const mutationObserver = new MutationObserver(() => {
         parlay.push(leg_obj);
     }
 
-    
     // console.log(parlay);
     // console.log(payouts);
     const parlayObj = {"parlay": parlay, "payouts": payouts};

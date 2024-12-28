@@ -5,7 +5,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "https://app.prizepicks.com"}})
+
+STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV']
 
 def has_accent(word):
     normalized = unicodedata.normalize('NFD', word)
@@ -32,13 +34,15 @@ def process_line(data):
             playerName = accented_players[playerName]
         player = players.find_players_by_full_name(playerName)[0]
         gamelogs = playergamelogs.PlayerGameLogs(player_id_nullable=player['id'], season_nullable="2024-25")
-        pra = gamelogs.get_data_frames()[0][['PTS', 'REB', 'AST']]
-        stats = None
+        queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
+        stats = 0
         statType = data['statType']
-        if (statType=='PTS' or statType=='REB' or statType=='AST'):
-            stats = pra[data['statType']]
-        elif (statType=='PRA'):
-            stats = pra.sum(axis=1)
+        if statType in STATS_LIST:
+            stats = queried_stats[statType]
+        elif "+" in statType:
+            statType = statType.split("+")
+            queried_stats = queried_stats[statType]
+            stats = queried_stats.sum(axis=1)
         hitLine = stats>float(data['line'])
         return {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0])}
 
