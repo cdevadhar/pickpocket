@@ -43,7 +43,10 @@ def process_line(data):
             statType = statType.split("+")
             queried_stats = queried_stats[statType]
             stats = queried_stats.sum(axis=1)
-        hitLine = stats>float(data['line'])
+        if (data["pick"]=="more"):
+            hitLine = stats>float(data['line'])
+        else:
+            hitLine = stats<float(data['line'])
         return {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0])}
 
     except Exception as e:
