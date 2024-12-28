@@ -76,8 +76,26 @@ const mutationObserver = new MutationObserver(() => {
             ev.style.backgroundColor='#6eff00';
             ev.style.color = 'BLACK';
         }
-        console.log(data["payoutodds"])
+        // console.log(data["payoutodds"]);
         payoutArea.append(ev);
+
+        let payoutOdds = payoutArea.querySelectorAll(".payout-odds");
+        for (const po of payoutOdds) {
+            po.remove();
+        }
+
+        const payoutsElements = selectedPayout.querySelectorAll("div.payout");
+        for (let i = 0; i < payoutsElements.length; i++) {
+            const odds = document.createElement("div");
+            const displayOdds = Math.round((data['payoutodds'][i] + Number.EPSILON) * 10000) / 100;
+            odds.textContent = `(${displayOdds}%)`;
+            odds.classList.add("payout-odds");
+            odds.style.borderRadius = "3px";
+            odds.style.padding = "5px";
+            odds.style.backgroundColor='#6eff00';
+            odds.style.color = 'BLACK';
+            payoutsElements[i].append(odds);
+        }
     })
     prevPicked = picked;
     prevPayout = selectedPayout;
