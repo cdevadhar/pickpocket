@@ -59,11 +59,24 @@ const mutationObserver = new MutationObserver(() => {
         let ev = payoutArea.querySelector(".expected-value");
         if (ev) ev.remove();
         ev = document.createElement("div");
-        ev.textContent = `Expected Value: ${data['ev']}`
+        const displayEV = Math.round((data['ev'] + Number.EPSILON) * 100) / 100;
+        ev.textContent = `Expected Multiplier: ${displayEV}X`;
         ev.classList.add("expected-value");
+        ev.style.padding = "10px"; 
+        ev.style.border = 'medium solid BLACK';
+        ev.style.borderRadius = "10px";
+        if (displayEV < 1) {
+            ev.style.backgroundColor='#e43245';
+            ev.style.color = '#f0f0f7';
+        } else if (displayEV < 1.1) {
+            ev.style.backgroundColor='#ffbb33';
+            ev.style.color = 'BLACK';
+        }
+        else {
+            ev.style.backgroundColor='#6eff00';
+            ev.style.color = 'BLACK';
+        }
         payoutArea.append(ev);
-       
-       
     })
     prevPicked = picked;
     prevPayout = selectedPayout;
