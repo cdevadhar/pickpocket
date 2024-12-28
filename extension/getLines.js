@@ -76,6 +76,7 @@ const mutationObserver = new MutationObserver(() => {
             ev.style.backgroundColor='#6eff00';
             ev.style.color = 'BLACK';
         }
+        console.log(data["payoutodds"])
         payoutArea.append(ev);
     })
     prevPicked = picked;

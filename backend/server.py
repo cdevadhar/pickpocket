@@ -59,9 +59,9 @@ def process_parlay():
             probabilities.append(processed_pick)
         # print(probabilities)
         payouts = data["payouts"]
+        payoutOdds = [0 for _ in payouts]
         ev = 0
-        for i in range(0, 2**len(probabilities)):
-            bitshit = i
+        for bitshit in range(0, 2**len(probabilities)):
             hits = 0
             currentProb = 1
             for j in range (0, len(probabilities)):
@@ -71,11 +71,12 @@ def process_parlay():
                 else:
                     currentProb = currentProb * (1-probabilities[j]['percentage'])
                 bitshit = bitshit >> 1
-            index = len(probabilities)-hits
-            if (index<len(payouts)):
-                ev+=currentProb*payouts[index]
+            i = len(probabilities)-hits
+            if (i<len(payouts)):
+                payoutOdds[i] += currentProb
+                ev += currentProb*payouts[i]
             # print({"hits": hits, "probability": currentProb})
-        return {"probabilities": probabilities, "ev": ev}
+        return {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev}
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 500
