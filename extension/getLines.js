@@ -1,11 +1,19 @@
-let prevPicked = [];
+let prevParlay = [];
 let prevPayouts = [];
 function arraysEqual(a, b) {
     if (a === b) return true;
     if (a == null || b == null) return false;
     if (a.length !== b.length) return false;
     for (var i = 0; i < a.length; ++i) {
-        if (a[i] !== b[i]) return false;
+        if (typeof a[i] == "object" && typeof b[i]=="object") {
+            for (const key of Object.keys(a[i])) {
+                if (a[i][key]!=b[i][key]) return false;
+            }
+            for (const key of Object.keys(b[i])) {
+                if (a[i][key]!=b[i][key]) return false;
+            }
+        }
+        else if (a[i] !== b[i]) return false;
     }
     return true;
 }
@@ -23,18 +31,18 @@ const mutationObserver = new MutationObserver(() => {
         return;
     }
     const parlay = [];
-    if (arraysEqual(prevPicked, picked) && arraysEqual(payouts, prevPayouts)) return;
     console.log(selectedPayout);
     for (const pick of picked) {
         const name = pick.querySelector('h3').innerHTML;
         const projection = pick.querySelector('.projected-score>.score').textContent;
         const statType = pick.querySelectorAll('.projected-score>div')[1].children[0].innerHTML;
+        const overUnderContainer = pick.parentElement.parentElement.querySelector(".over-under");
+        const overUnder = overUnderContainer.querySelector("button.selected").textContent.toLowerCase();
         // console.log(name+" "+projection + " "+statType);
-
-        const leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType]}
+        const leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType], "pick": overUnder}
         parlay.push(leg_obj);
     }
-
+    if (arraysEqual(prevParlay, parlay) && arraysEqual(payouts, prevPayouts)) return;
     // console.log(parlay);
     // console.log(payouts);
     const parlayObj = {"parlay": parlay, "payouts": payouts};
@@ -51,12 +59,12 @@ const mutationObserver = new MutationObserver(() => {
         const probs = data['probabilities'];
         for (let i=0; i<picked.length; i++) {
             const prob = probs[i];
-            if (!picked[i].querySelector(".hitrate-pickpocket")){
-                const proj = document.createElement("div");
-                proj.textContent = `${Math.round((prob["percentage"] + Number.EPSILON) * 100)}% (${prob["hit"]}/${prob["games"]})`;
-                proj.classList.add('selected', 'hitrate-pickpocket');
-                picked[i].append(proj);
-            }
+            const existingProj = picked[i].querySelector(".hitrate-pickpocket");
+            if (existingProj) existingProj.remove();
+            const proj = document.createElement("div");
+            proj.textContent = `${Math.round((prob["percentage"] + Number.EPSILON) * 100)}% (${prob["hit"]}/${prob["games"]})`;
+            proj.classList.add('selected', 'hitrate-pickpocket');
+            picked[i].append(proj);
         }
 
         let payoutOdds = payoutArea.querySelectorAll(".payout-odds");
@@ -137,7 +145,7 @@ const mutationObserver = new MutationObserver(() => {
         // console.log(data["payoutodds"]);
         analytics.append(wr);
     })
-    prevPicked = picked;
+    prevParlay = parlay;
     prevPayouts = payouts;
 })
 
