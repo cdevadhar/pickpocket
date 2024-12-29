@@ -127,7 +127,7 @@ def process_parlay():
             processed_pick = process_line(pick)
             probabilities.append(processed_pick)
             status = "Healthy"
-            if pick["player"] in injuries[NBA_ABBREVIATIONS[pick["team"]]]:
+            if NBA_ABBREVIATIONS[pick["team"]] in injuries and pick["player"] in injuries[NBA_ABBREVIATIONS[pick["team"]]]:
                 status = injuries[NBA_ABBREVIATIONS[pick["team"]]][pick["player"]]
             injuryStatuses.append(status)
         # print(injuryStatuses)

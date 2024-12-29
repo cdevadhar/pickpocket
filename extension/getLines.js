@@ -57,18 +57,19 @@ const mutationObserver = new MutationObserver(() => {
     }).then((res) => {
         return res.json();
     }).then(data => {
+        const overUnderContainers = document.querySelectorAll(".over-under");
         // console.log(data);
         // console.log(data["injurystatuses"]);
         const probs = data['probabilities'];
         for (let i=0; i<picked.length; i++) {
             const prob = probs[i];
             const status = data["injurystatuses"][i];
-            const existingProj = picked[i].querySelector(".hitrate-pickpocket");
+            const existingProj = overUnderContainers[i].querySelector(".hitrate-pickpocket");
             if (existingProj) existingProj.remove();
             const proj = document.createElement("div");
             const displayedProj = Math.round((prob["percentage"] + Number.EPSILON) * 100)
             proj.textContent = `${displayedProj}% (${prob["hit"]}/${prob["games"]})`;
-            proj.classList.add('selected', 'hitrate-pickpocket');
+            proj.classList.add('hitrate-pickpocket');
             if (displayedProj < 40){
                 proj.style.color = '#e43245';
             }
@@ -78,13 +79,29 @@ const mutationObserver = new MutationObserver(() => {
             else {
                 proj.style.color = "#6eff00";
             }
-            picked[i].append(proj);
+            proj.style.padding = "5px 3px";
+            overUnderContainers[i].append(proj);
+
+            const buttons = overUnderContainers[i].querySelectorAll("button");
+            buttons.forEach(button => {
+                button.style.flexShrink = '0'; // Prevent shrinking
+              });
 
             const existingStatus = picked[i].querySelector(".injury-status");
             if (existingStatus) existingStatus.remove();
 
             const availabilityIndicator = document.createElement('button');
             availabilityIndicator.textContent = status;
+            availabilityIndicator.style.fontSize = 'small';
+            if (status == "Out"){
+                availabilityIndicator.style.color = '#e43245';
+            }
+            else if (status == "Day-To-Day"){
+                availabilityIndicator.style.color = '#ffbb33';
+            }
+            else {
+                availabilityIndicator.style.color = "#6eff00";
+            }
             availabilityIndicator.classList.add('injury-status');
 
             picked[i].append(availabilityIndicator);
