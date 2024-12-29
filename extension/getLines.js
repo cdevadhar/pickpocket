@@ -18,7 +18,7 @@ function arraysEqual(a, b) {
     return true;
 }
 
-const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M"}
+const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M", "3-PT Attempted": "FG3A", "FG Attempted": "FGA"}
 
 const mutationObserver = new MutationObserver(() => {
     const picked = document.querySelectorAll('li.entry-prediction .player');
@@ -34,12 +34,14 @@ const mutationObserver = new MutationObserver(() => {
     // console.log(selectedPayout);
     for (const pick of picked) {
         const name = pick.querySelector('h3').innerHTML;
+        const team = pick.querySelector('p.team-position').textContent.split(" - ")[0].slice(-3);
+        const opposition = pick.textContent.split(/@ |vs /)[1].slice(0,3);
         const projection = pick.querySelector('.projected-score>.score').textContent;
         const statType = pick.querySelectorAll('.projected-score>div')[1].children[0].innerHTML;
         const overUnderContainer = pick.parentElement.parentElement.querySelector(".over-under");
         const overUnder = overUnderContainer.querySelector("button.selected").textContent.toLowerCase();
         // console.log(name+" "+projection + " "+statType);
-        const leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType], "pick": overUnder}
+        const leg_obj = {"player": name, "line": projection, "statType": statNameToAbbrev[statType], "pick": overUnder, "team": team, "opposition": opposition}
         parlay.push(leg_obj);
     }
     if (arraysEqual(prevParlay, parlay) && arraysEqual(payouts, prevPayouts)) return;
@@ -56,15 +58,36 @@ const mutationObserver = new MutationObserver(() => {
         return res.json();
     }).then(data => {
         // console.log(data);
+        // console.log(data["injurystatuses"]);
         const probs = data['probabilities'];
         for (let i=0; i<picked.length; i++) {
             const prob = probs[i];
+            const status = data["injurystatuses"][i];
             const existingProj = picked[i].querySelector(".hitrate-pickpocket");
             if (existingProj) existingProj.remove();
             const proj = document.createElement("div");
-            proj.textContent = `${Math.round((prob["percentage"] + Number.EPSILON) * 100)}% (${prob["hit"]}/${prob["games"]})`;
+            const displayedProj = Math.round((prob["percentage"] + Number.EPSILON) * 100)
+            proj.textContent = `${displayedProj}% (${prob["hit"]}/${prob["games"]})`;
             proj.classList.add('selected', 'hitrate-pickpocket');
+            if (displayedProj < 40){
+                proj.style.color = '#e43245';
+            }
+            else if (displayedProj < 60){
+                proj.style.color = '#ffbb33';
+            }
+            else {
+                proj.style.color = "#6eff00";
+            }
             picked[i].append(proj);
+
+            const existingStatus = picked[i].querySelector(".injury-status");
+            if (existingStatus) existingStatus.remove();
+
+            const availabilityIndicator = document.createElement('button');
+            availabilityIndicator.textContent = status;
+            availabilityIndicator.classList.add('injury-status');
+
+            picked[i].append(availabilityIndicator);
         }
 
         let payoutOdds = payoutArea.querySelectorAll(".payout-odds");
@@ -84,7 +107,7 @@ const mutationObserver = new MutationObserver(() => {
             odds.style.backgroundColor='#6eff00';
             odds.style.color = 'BLACK';
             odds.style.fontSize = 'small';
-            odds.style.fontWeight = "bold"
+            odds.style.fontWeight = "bold";
             payoutsElements[i].append(odds);
 
             if (payouts[i] >= 1){
@@ -144,7 +167,9 @@ const mutationObserver = new MutationObserver(() => {
         }
         // console.log(data["payoutodds"]);
         analytics.append(wr);
-    })
+    }).catch(err => {
+        console.log(err)
+    });
     prevParlay = parlay;
     prevPayouts = payouts;
 })

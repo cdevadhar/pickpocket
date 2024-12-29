@@ -1,13 +1,52 @@
 from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 import unicodedata
+import time
+import requests
+import traceback
+from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://app.prizepicks.com"}})
 
-STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV']
+lastInjuryUpdate = None
+injuries = {}
+
+STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV', 'FGA', "FG3A"]
+NBA_ABBREVIATIONS = nba_teams = {
+    "ATL": "Atlanta Hawks",
+    "BOS": "Boston Celtics",
+    "CHA": "Charlotte Hornets",
+    "CHI": "Chicago Bulls",
+    "CLE": "Cleveland Cavaliers",
+    "DAL": "Dallas Mavericks",
+    "DEN": "Denver Nuggets",
+    "DET": "Detroit Pistons",
+    "GSW": "Golden State Warriors",
+    "HOU": "Houston Rockets",
+    "IND": "Indiana Pacers",
+    "LAC": "Los Angeles Clippers",
+    "LAL": "Los Angeles Lakers",
+    "MEM": "Memphis Grizzlies",
+    "MIA": "Miami Heat",
+    "MIL": "Milwaukee Bucks",
+    "MIN": "Minnesota Timberwolves",
+    "NOP": "New Orleans Pelicans",
+    "NYK": "New York Knicks",
+    "BKN": "Brooklyn Nets",
+    "OKC": "Oklahoma City Thunder",
+    "ORL": "Orlando Magic",
+    "PHI": "Philadelphia 76ers",
+    "PHX": "Phoenix Suns",
+    "POR": "Portland Trail Blazers",
+    "SAC": "Sacramento Kings",
+    "SAS": "San Antonio Spurs",
+    "TOR": "Toronto Raptors",
+    "UTA": "Utah Jazz",
+    "WAS": "Washington Wizards"
+}
 
 def has_accent(word):
     normalized = unicodedata.normalize('NFD', word)
@@ -22,7 +61,6 @@ for player in all_players:
     if (has_accent(player['full_name'])):
         no_accents = remove_accents(player['full_name'])
         accented_players[no_accents] = player['full_name']
-
 
 def process_line(data):
     try:
@@ -53,17 +91,46 @@ def process_line(data):
         print(e)
         return {"error": str(e)}
     
+def update_injuries():
+    global lastInjuryUpdate
+    global injuries
+    now = time.time()
+    if lastInjuryUpdate is None or now - lastInjuryUpdate > 3600:
+        try: 
+            injuries = {}
+            lastInjuryUpdate = now
+            res = requests.get("https://www.espn.com/nba/injuries", headers={"User-Agent": "curl/7.64.1"})
+            soup = BeautifulSoup(res.text, "html.parser")
+            teams = soup.select("div.ResponsiveTable.Table__league-injuries")
+            for team in teams:
+                name = team.select_one("span.injuries__teamName")
+                # print("Team Name: ", name.text)
+                injuries[name.text] = {}
+                players = [{x.text: y.text} for x, y in zip(team.select("td.col-name"), team.select("td.col-stat"))]
+                for player in players:
+                    # print(player)
+                    injuries[name.text].update(player)
+        except requests.RequestException as e:
+            print(f"Error fetching injury updates: {e}")
+    
 @app.route('/checkParlay', methods=['POST'])
 def process_parlay():
     try:
+        update_injuries()
         data = request.get_json()
         if not data:
             return jsonify({"error": "No JSON provided"}), 400
         parlay = data["parlay"]
         probabilities = []
-        for pick in parlay:
+        injuryStatuses = []
+        for pick in parlay:            
             processed_pick = process_line(pick)
             probabilities.append(processed_pick)
+            status = "Healthy"
+            if pick["player"] in injuries[NBA_ABBREVIATIONS[pick["team"]]]:
+                status = injuries[NBA_ABBREVIATIONS[pick["team"]]][pick["player"]]
+            injuryStatuses.append(status)
+        # print(injuryStatuses)
         # print(probabilities)
         payouts = data["payouts"]
         payoutOdds = [0 for _ in payouts]
@@ -76,6 +143,8 @@ def process_parlay():
                     currentProb = currentProb * probabilities[j]['percentage']
                     hits+=1
                 else:
+                    # print(currentProb)
+                    # print(probabilities[j])
                     currentProb = currentProb * (1-probabilities[j]['percentage'])
                 bitshit = bitshit >> 1
             i = len(probabilities)-hits
@@ -83,9 +152,11 @@ def process_parlay():
                 payoutOdds[i] += currentProb
                 ev += currentProb*payouts[i]
             # print({"hits": hits, "probability": currentProb})
-        return {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev}
+        return {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev, "injurystatuses": injuryStatuses}
     except Exception as e:
         print(e)
+        tb = traceback.extract_tb(e.__traceback__)
+        print("Exception occurred on line", tb[-1].lineno)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
