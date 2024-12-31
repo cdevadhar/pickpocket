@@ -3,3 +3,4 @@ flask
 pandas
 flask-cors
 beautifulsoup4
+python-dotenv
