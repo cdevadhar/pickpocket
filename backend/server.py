@@ -99,6 +99,10 @@ def process_line(data, checking_last_game=False):
         print(e)
         return {"error": str(e)}
     
+@app.route('/checkHit', methods=['POST'])
+def check_hit():
+    process_line(request.get_json(), checking_last_game=True)
+    
 def update_injuries():
     global lastInjuryUpdate
     global injuries
