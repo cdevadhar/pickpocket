@@ -23,11 +23,21 @@ const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST",
 const mutationObserver = new MutationObserver(() => {
     const picked = document.querySelectorAll('li.entry-prediction .player');
     const payoutArea = document.querySelector(".entry-predictions-game-type");
-    if (!payoutArea) return;
+    if (!payoutArea){
+        prevParlay = []
+        prevPayouts = []
+        return;
+    }
     const selectedPayout = payoutArea.querySelector("button.selected");
-    if (!selectedPayout) return;
+    if (!selectedPayout) {
+        prevParlay = []
+        prevPayouts = []
+        return;
+    }
     const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0]));
-    if (payouts.length==0) {
+    if (payouts.length == 0) {
+        prevParlay = []
+        prevPayouts = []
         return;
     }
     const parlay = [];
