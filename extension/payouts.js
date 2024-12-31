@@ -2,7 +2,7 @@ const DATA_ENDPOINT = "https://api.prizepicks.com/game_types";
 const headers = {
     "Content-Type": "application/json"
 };
-const payload = {
+const payload = { // TODO: ACTUALLY ADD PAYLOAD LOGIC
   new_wager: {
     amount_bet_cents: 0,
     picks: [
