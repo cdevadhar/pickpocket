@@ -62,9 +62,8 @@ for player in all_players:
         no_accents = remove_accents(player['full_name'])
         accented_players[no_accents] = player['full_name']
 
-def process_line(data):
+def process_line(data, checking_last_game=False):
     try:
-        # Get the JSON payload. Expects player, statType, line
         # print(data)
         # print("requesting")
         playerName = data['player']
@@ -81,11 +80,20 @@ def process_line(data):
             statType = statType.split("+")
             queried_stats = queried_stats[statType]
             stats = queried_stats.sum(axis=1)
+        if checking_last_game:
+            stats = int(stats.iloc[0])
         if (data["pick"]=="more"):
             hitLine = stats>float(data['line'])
         else:
             hitLine = stats<float(data['line'])
-        return {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0])}
+        if checking_last_game:
+            return hitLine
+        
+        status = "Healthy"
+        if NBA_ABBREVIATIONS[data["team"]] in injuries and data["player"] in injuries[NBA_ABBREVIATIONS[data["team"]]]:
+            status = injuries[NBA_ABBREVIATIONS[data["team"]]][data["player"]]
+        
+        return {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0]), "injurystatus": status}
 
     except Exception as e:
         print(e)
@@ -126,10 +134,7 @@ def process_parlay():
         for pick in parlay:            
             processed_pick = process_line(pick)
             probabilities.append(processed_pick)
-            status = "Healthy"
-            if NBA_ABBREVIATIONS[pick["team"]] in injuries and pick["player"] in injuries[NBA_ABBREVIATIONS[pick["team"]]]:
-                status = injuries[NBA_ABBREVIATIONS[pick["team"]]][pick["player"]]
-            injuryStatuses.append(status)
+            injuryStatuses.append(processed_pick["injurystatus"])
         # print(injuryStatuses)
         # print(probabilities)
         payouts = data["payouts"]
@@ -153,6 +158,20 @@ def process_parlay():
                 ev += currentProb*payouts[i]
             # print({"hits": hits, "probability": currentProb})
         return {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev, "injurystatuses": injuryStatuses}
+    except Exception as e:
+        print(e)
+        tb = traceback.extract_tb(e.__traceback__)
+        print("Exception occurred on line", tb[-1].lineno)
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/checkLine", methods=['POST'])
+def check_line():
+    try:
+        update_injuries()
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No JSON provided"}), 400
+        return process_line(data)
     except Exception as e:
         print(e)
         tb = traceback.extract_tb(e.__traceback__)

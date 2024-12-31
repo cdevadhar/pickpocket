@@ -34,7 +34,7 @@ fetch(DATA_ENDPOINT, {
       }
     })
     .then(data => {
-      console.log(data);
+      // console.log(data);
       // TODO: PROCESS DATA
     })
     .catch(error => {
