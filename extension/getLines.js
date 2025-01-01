@@ -18,7 +18,7 @@ function arraysEqual(a, b) {
     return true;
 }
 
-const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M", "3-PT Attempted": "FG3A", "FG Attempted": "FGA"}
+const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M", "3-PT Attempted": "FG3A", "FT Attempted": "FTA", "FG Attempted": "FGA", "Offensive Rebounds": "OREB", "Defensive Rebounds": "DREB", "Fantasy Score": "FS"}
 
 const mutationObserver = new MutationObserver(() => {
     const picked = document.querySelectorAll('li.entry-prediction .player');

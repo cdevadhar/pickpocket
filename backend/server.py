@@ -14,7 +14,7 @@ CORS(app)
 lastInjuryUpdate = None
 injuries = {}
 
-STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV', 'FGA', "FG3A"]
+STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV', 'FGA', "FG3A", "OREB", "DREB", "FTA"]
 NBA_ABBREVIATIONS = nba_teams = {
     "ATL": "Atlanta Hawks",
     "BOS": "Boston Celtics",
@@ -74,7 +74,9 @@ def process_line(data, checking_last_game=False):
         queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
         stats = 0
         statType = data['statType']
-        if statType in STATS_LIST:
+        if statType == "FS":
+            stats = queried_stats["PTS"] + (1.2 * queried_stats["REB"]) + (1.5 * queried_stats["AST"]) + (3 * queried_stats["BLK"]) + (3 * queried_stats["STL"]) - queried_stats["TOV"]
+        elif statType in STATS_LIST:
             stats = queried_stats[statType]
         elif "+" in statType:
             statType = statType.split("+")
