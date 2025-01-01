@@ -49,6 +49,7 @@ for key in player_new_stats.keys():
 analytics = []
 x_axis = []
 y_axis = []
+standard_picks = []
 for stat in data:
     # print(stat)
     player_name = find_player(stat['relationships']['new_player']['data']['id'])
@@ -78,15 +79,24 @@ for stat in data:
         print("expected percentage", float(hitLine.sum()/hitLine.shape[0]))
         print(hit_or_not.sum(), hit_or_not.shape[0])
         if (hit_or_not.shape[0]>0):
+            add_to_standards = False
+            if stat['attributes']['odds_type']=='standard':
+                if float(hitLine.sum()/hitLine.shape[0])>0.6:
+                    add_to_standards = True
             for i in range(hit_or_not.sum()):
                 x_axis.append(float(hitLine.sum()/hitLine.shape[0]))
                 y_axis.append(1)
                 analytics.append({"percentage": float(hitLine.sum()/hitLine.shape[0]), "hit": 1, "playerProp": player_name+" "+str(stat['attributes']['line_score'])+" "+str(stat['attributes']['stat_type'])})
+                if (add_to_standards):
+                    standard_picks.append({"percentage": float(hitLine.sum()/hitLine.shape[0]), "hit": 1, "playerProp": player_name+" "+str(stat['attributes']['line_score'])+" "+str(stat['attributes']['stat_type'])})
             for i in range(hit_or_not.shape[0]-hit_or_not.sum()):
                 x_axis.append(float(hitLine.sum()/hitLine.shape[0]))
                 y_axis.append(0)
                 analytics.append({"percentage": float(hitLine.sum()/hitLine.shape[0]), "hit": 0, "playerProp": player_name+" "+str(stat['attributes']['line_score'])+" "+str(stat['attributes']['stat_type'])})
+                if (add_to_standards):
+                    standard_picks.append({"percentage": float(hitLine.sum()/hitLine.shape[0]), "hit": 0, "playerProp": player_name+" "+str(stat['attributes']['line_score'])+" "+str(stat['attributes']['stat_type'])})
         # print(actualHits)
+        
     except Exception as e:
         print('error', e)
 
@@ -94,30 +104,39 @@ x_axis_np = np.array(x_axis)
 y_axis_np = np.array(y_axis)
 # plt.scatter(x_axis_np, y_axis_np)
 # plt.show()
-
 sorted_analytics = sorted(analytics, key=lambda x: x['percentage'])
 expected = []
 actual = []
 
-for i in range(20):
-    prob_lower = 0.05*i
-    prob_higher = 0.05*(i+1)
-    total = 0
-    hits = 0
-    for result in sorted_analytics:
-        if (result['percentage']>prob_higher):
-            break
-        if (result['percentage']<prob_lower):
-            continue
-        total+=1
-        if (result["hit"]==1):
-            hits+=1
-    if (total==0):
-        continue
-    print("Expected ", prob_lower, " to ", prob_higher)
-    print("Actual", hits/total, hits, "/", total)
-    expected.append((prob_lower+prob_higher)/2)
-    actual.append(hits/total)
+# for i in range(20):
+#     prob_lower = 0.05*i
+#     prob_higher = 0.05*(i+1)
+#     total = 0
+#     hits = 0
+#     for result in sorted_analytics:
+#         if (result['percentage']>prob_higher):
+#             break
+#         if (result['percentage']<prob_lower):
+#             continue
+#         total+=1
+#         if (result["hit"]==1):
+#             hits+=1
+#     if (total==0):
+#         continue
+#     print("Expected ", prob_lower, " to ", prob_higher)
+#     print("Actual", hits/total, hits, "/", total)
+#     expected.append((prob_lower+prob_higher)/2)
+#     actual.append(hits/total)
 
-plt.scatter(np.array(expected), np.array(actual))
-plt.show()
+# plt.scatter(np.array(expected), np.array(actual))
+# plt.show()
+
+# print(standard_picks)
+num_hit = 0
+for pick in standard_picks:
+    print(pick['percentage'], pick['hit'], pick['playerProp'])
+    if (pick['hit']==1):
+        num_hit+=1
+
+print(num_hit)
+print(len(standard_picks))
