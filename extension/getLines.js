@@ -22,24 +22,19 @@ const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST",
 
 const mutationObserver = new MutationObserver(() => {
     const picked = document.querySelectorAll('li.entry-prediction .player');
+
+    if (picked.length == 0) {
+        prevParlay = []
+        prevPayouts = []
+        return;
+    }
+
     const payoutArea = document.querySelector(".entry-predictions-game-type");
-    if (!payoutArea){
-        prevParlay = []
-        prevPayouts = []
-        return;
-    }
-    const selectedPayout = payoutArea.querySelector("button.selected");
-    if (!selectedPayout) {
-        prevParlay = []
-        prevPayouts = []
-        return;
-    }
-    const payouts = [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0]));
-    if (payouts.length == 0) {
-        prevParlay = []
-        prevPayouts = []
-        return;
-    }
+
+    const selectedPayout = payoutArea ? payoutArea.querySelector("button.selected") : null;
+    
+    const payouts = selectedPayout ? [...selectedPayout.querySelectorAll("span.payout-multiplier")].map(element => parseFloat(element.textContent.split("X")[0])) : [];
+
     const parlay = [];
     // console.log(selectedPayout);
     for (const pick of picked) {
@@ -57,6 +52,10 @@ const mutationObserver = new MutationObserver(() => {
     if (arraysEqual(prevParlay, parlay) && arraysEqual(payouts, prevPayouts)) return;
     // console.log(parlay);
     // console.log(payouts);
+
+    prevParlay = parlay;
+    prevPayouts = payouts;
+
     const parlayObj = {"parlay": parlay, "payouts": payouts};
     fetch("http://127.0.0.1:5000/checkParlay", {
         method: "POST",
@@ -117,6 +116,16 @@ const mutationObserver = new MutationObserver(() => {
             picked[i].append(availabilityIndicator);
         }
 
+        let ev = document.querySelector(".expected-value");
+        if (ev) ev.remove();
+
+        let wr = document.querySelector(".win-rate");
+        if (wr) wr.remove();
+
+        if (payouts.length == 0 || !selectedPayout) {
+            return;
+        }
+
         let payoutOdds = payoutArea.querySelectorAll(".payout-odds");
         for (const po of payoutOdds) {
             po.remove();
@@ -147,8 +156,6 @@ const mutationObserver = new MutationObserver(() => {
         analytics.style.padding = "0px 5px";
         payoutArea.append(analytics);
 
-        let ev = payoutArea.querySelector(".expected-value");
-        if (ev) ev.remove();
         ev = document.createElement("div");
         const displayEV = Math.round((data['ev'] + Number.EPSILON) * 100) / 100;
         ev.textContent = `Expected Multiplier: ${displayEV}X`;
@@ -171,8 +178,6 @@ const mutationObserver = new MutationObserver(() => {
         // console.log(data["payoutodds"]);
         analytics.append(ev);
 
-        let wr = payoutArea.querySelector(".win-rate");
-        if (wr) wr.remove();
         wr = document.createElement("div");
         const displayWR = Math.round((winrate + Number.EPSILON) * 10000) / 100;
         wr.textContent = `Break-Even Rate: ${displayWR}%`;
@@ -197,8 +202,6 @@ const mutationObserver = new MutationObserver(() => {
     }).catch(err => {
         console.log(err)
     });
-    prevParlay = parlay;
-    prevPayouts = payouts;
 })
 
 // console.log("pickpocket active");

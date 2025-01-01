@@ -142,6 +142,8 @@ def process_parlay():
         # print(injuryStatuses)
         # print(probabilities)
         payouts = data["payouts"]
+        if len(payouts) == 0:
+            return {"probabilities": probabilities, "injurystatuses": injuryStatuses}
         payoutOdds = [0 for _ in payouts]
         ev = 0
         for bitshit in range(0, 2**len(probabilities)):
@@ -162,20 +164,6 @@ def process_parlay():
                 ev += currentProb*payouts[i]
             # print({"hits": hits, "probability": currentProb})
         return {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev, "injurystatuses": injuryStatuses}
-    except Exception as e:
-        print(e)
-        tb = traceback.extract_tb(e.__traceback__)
-        print("Exception occurred on line", tb[-1].lineno)
-        return jsonify({"error": str(e)}), 500
-    
-@app.route("/checkLine", methods=['POST'])
-def check_line():
-    try:
-        update_injuries()
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No JSON provided"}), 400
-        return process_line(data)
     except Exception as e:
         print(e)
         tb = traceback.extract_tb(e.__traceback__)
