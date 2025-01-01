@@ -30,7 +30,7 @@ count = 0
 for player in included_players:
     try:
         player_name = player['attributes']['name']
-        if os.path.exists('playerData/'+player_name+'.csv'):
+        if os.path.exists('playerDataCheck/'+player_name+'.csv'):
             print("already exists")
             continue
         print(player_name)
@@ -41,7 +41,7 @@ for player in included_players:
         gamelogs = playergamelogs.PlayerGameLogs(player_id_nullable=player_obj['id'], season_nullable="2024-25")
         queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
         player_gamelogs[player_name] = queried_stats
-        queried_stats.to_csv('playerData/'+player_name+'.csv', index=False)
+        queried_stats.to_csv('playerDataCheck/'+player_name+'.csv', index=False)
         time.sleep(5)
     except Exception as e:
         print('error', e)
@@ -81,7 +81,9 @@ for stat in data:
 standard = sorted(standard, key=lambda d: d['percentage'])
 goblins = sorted(goblins, key=lambda d: d['percentage'])
 demons = sorted(demons, key=lambda d: d['percentage'])
-
+print(len(standard))
+print(len(goblins))
+print(len(demons))
 print(standard[-20:])
 print(goblins[-20:])
 print(demons[-20:])
