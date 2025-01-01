@@ -1,10 +1,14 @@
+#!/usr/bin/env python3
+import math
 import json
 import os
 import pandas as pd
-from nba_api.stats.endpoints import playergamelogs
-from nba_api.stats.static import players
 import matplotlib.pyplot as plt
 import numpy as np
+
+def z_test_props(hit, miss, expected):
+    p = ((hit/miss) - expected) / math.sqrt((expected * (1-expected))/miss)
+    return abs(p) <= 1.96
 
 with open('nbaData.json') as f:
     jsonFile = json.load(f)
@@ -99,6 +103,8 @@ sorted_analytics = sorted(analytics, key=lambda x: x['percentage'])
 expected = []
 actual = []
 
+reasonable = []
+
 for i in range(20):
     prob_lower = 0.05*i
     prob_higher = 0.05*(i+1)
@@ -118,6 +124,9 @@ for i in range(20):
     print("Actual", hits/total, hits, "/", total)
     expected.append((prob_lower+prob_higher)/2)
     actual.append(hits/total)
+    reasonable.append(z_test_props(hits, total, expected[-1]))
+
+print(reasonable)
 
 plt.scatter(np.array(expected), np.array(actual))
 plt.show()
