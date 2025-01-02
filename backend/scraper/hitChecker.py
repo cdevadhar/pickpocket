@@ -137,13 +137,14 @@ for i in range(20):
 
 print(reasonable)
 
-# plt.scatter(np.array(expected), np.array(actual))
-# plt.show()
+plt.scatter(np.array(expected), np.array(actual))
+plt.plot([0, 1], [0, 1])
+plt.show()
 
-# print(standard_picks)
+print(standard_picks)
 num_hit = 0
 for pick in standard_picks:
-    print(pick['percentage'], pick['hit'], pick['playerProp'])
+    # print(pick['percentage'], pick['hit'], pick['playerProp'])
     if (pick['hit']==1):
         num_hit+=1
 

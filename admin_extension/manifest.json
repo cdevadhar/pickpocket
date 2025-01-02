@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "PickPocket Admin",
+  "description": "PickPocket Admin",
+  "version": "0.1.0",
+  "content_scripts": [
+   {
+     "matches": ["https://*.prizepicks.com/*"],
+     "js": ["payouts.js", "load_data.js"]
+   }
+ ]
+}
