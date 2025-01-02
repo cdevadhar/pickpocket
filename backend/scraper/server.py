@@ -2,6 +2,7 @@ from flask import Flask, request
 from flask_cors import CORS
 import datetime
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -15,8 +16,13 @@ def add_json():
     
         day = str(datetime.datetime.now()).split(" ")[0]
 
-        with open(f'nbaDataJsons/{day}.json', 'w') as f:
-            json.dump(data, f, indent=4)
+        day_path = f'nbaDataJsons/{day}.json'
+
+        if not os.path.exists(day_path):
+            with open(day_path, 'w') as f:
+                json.dump(data, f, indent=4)
+        # else:
+        #     print("File exists")
     except Exception as e:
         return {"error": str(e)}, 400
     
