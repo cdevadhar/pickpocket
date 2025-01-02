@@ -10,7 +10,7 @@ CORS(app)
 @app.route("/add-json", methods=['POST'])
 def add_json():
     try:
-        data = request.get_json()["data"]
+        data = request.get_json()
         if data is None:
             return {"error": "Invalid JSON data"}, 400
     
