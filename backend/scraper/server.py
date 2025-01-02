@@ -16,7 +16,7 @@ def add_json():
         day = str(datetime.datetime.now()).split(" ")[0]
 
         with open(f'nbaDataJsons/{day}.json', 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
     except Exception as e:
         return {"error": str(e)}, 400
     
