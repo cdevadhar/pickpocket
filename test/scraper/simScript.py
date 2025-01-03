@@ -134,19 +134,23 @@ for stat in y_data:
         # print("actual outcome", hit_or_not.sum(), "/", hit_or_not.shape[0])
         if (actualHits.shape[0]>0):
             for i in range(actualHits.sum()):
-                analytics.append({"percentage": probability, "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+                analytics.append({"lower_percentage": probability, "emp_percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
             for i in range(actualHits.shape[0]-actualHits.sum()):
-                analytics.append({"percentage": probability, "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+                analytics.append({"lower_percentage": probability, "emp_percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
     except Exception as e:      
         print("error", e)
 
 
-sorted_analytics = sorted(analytics, key=lambda x: x['percentage'])
+sorted_analytics = sorted(analytics, key=lambda x: x['lower_percentage'])
+sorted_analytics2 = sorted(analytics, key=lambda x: x['emp_percentage'])
 print(len(sorted_analytics))
 print(len(y_data))
 print(sorted_analytics)
 expected = []
 actual = []
+
+expected2 = []
+actual2 = []
 
 reasonable = []
 
@@ -156,9 +160,9 @@ for i in range(20):
     total = 0
     hits = 0
     for result in sorted_analytics:
-        if (result['percentage']>prob_higher):
+        if (result['lower_percentage']>prob_higher):
             break
-        if (result['percentage']<prob_lower):
+        if (result['lower_percentage']<prob_lower):
             continue
         total+=1
         if (result["hit"]==1):
@@ -170,8 +174,27 @@ for i in range(20):
     expected.append((prob_lower+prob_higher)/2)
     actual.append(hits/total)
 
-print(reasonable)
+for i in range(20):
+    prob_lower = 0.05*i
+    prob_higher = 0.05*(i+1)
+    total = 0
+    hits = 0
+    for result in sorted_analytics2:
+        if (result['emp_percentage']>prob_higher):
+            break
+        if (result['emp_percentage']<prob_lower):
+            continue
+        total+=1
+        if (result["hit"]==1):
+            hits+=1
+    if (total==0):
+        continue
+    print("Expected ", prob_lower, " to ", prob_higher)
+    print("Actual", hits/total, hits, "/", total)
+    expected2.append((prob_lower+prob_higher)/2)
+    actual2.append(hits/total) 
 
 plt.scatter(np.array(expected), np.array(actual))
+plt.scatter(np.array(expected2), np.array(actual2))
 plt.plot([0, 1], [0, 1])
 plt.show()
