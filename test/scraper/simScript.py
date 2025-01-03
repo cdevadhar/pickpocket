@@ -4,11 +4,12 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import time
 from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 import scipy.stats as stats
+import sys
 
 def ks_normal_test(sample, mean, std_dev):
     _, p_value = stats.kstest(sample, 'norm', args=(mean, std_dev))
@@ -44,8 +45,17 @@ today = todayDate.strftime("%Y-%m-%d")
 
 all_jsons = os.listdir('lineJsons')
 paths = [os.path.join("lineJsons", file) for file in all_jsons]
-latest_lines = max(paths, key=os.path.getmtime)
-todays_lines = os.path.join("lineJsons", today+'.json')
+lines_date = todayDate-timedelta(1)
+args = sys.argv[1:]
+if (len(args)>0):
+    try:
+        lines_date = pd.to_datetime(args[0]).date()
+        todayDate = lines_date+timedelta(1)
+        today = todayDate.strftime("%Y-%m-%d")
+    except Exception as e:
+        print('error', e)
+        sys.exit()
+latest_lines = os.path.join("lineJsons", lines_date.strftime("%Y-%m-%d")+'.json')
 
 with open(latest_lines) as f:
     jsonFile = json.load(f)
@@ -174,26 +184,6 @@ for i in range(20):
     print("Actual", hits/total, hits, "/", total)
     expected.append((prob_lower+prob_higher)/2)
     actual.append(hits/total)
-
-for i in range(20):
-    prob_lower = 0.05*i
-    prob_higher = 0.05*(i+1)
-    total = 0
-    hits = 0
-    for result in sorted_analytics2:
-        if (result['emp_percentage']>prob_higher):
-            break
-        if (result['emp_percentage']<prob_lower):
-            continue
-        total+=1
-        if (result["hit"]==1):
-            hits+=1
-    if (total==0):
-        continue
-    print("Expected ", prob_lower, " to ", prob_higher)
-    print("Actual", hits/total, hits, "/", total)
-    expected2.append((prob_lower+prob_higher)/2)
-    actual2.append(hits/total)
     
 plt.scatter(np.array(expected), np.array(actual), label="Using Normal Dist")
 plt.scatter(np.array(expected2), np.array(actual2), label="Raw Data")
