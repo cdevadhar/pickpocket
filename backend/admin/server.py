@@ -16,7 +16,7 @@ def add_json():
     
         day = str(datetime.datetime.now()).split(" ")[0]
 
-        day_path = f'../../test/scraper/playerData/{day}.json'
+        day_path = f'../../test/scraper/lineJsons/{day}.json'
 
         if not os.path.exists(day_path):
             with open(day_path, 'w') as f:
