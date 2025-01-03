@@ -139,7 +139,7 @@ for stat in y_data:
     except Exception as e:      
         print("error", e)
 
-with open('analyticsFiles/'+today, 'w') as file:
+with open('lineJsons/'+today, 'w') as file:
     json.dump(analytics, file)
     
 sorted_analytics = sorted(analytics, key=lambda x: x['lower_percentage'])
