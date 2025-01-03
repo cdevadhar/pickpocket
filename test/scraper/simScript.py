@@ -9,6 +9,35 @@ from datetime import date, datetime
 import time
 from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
+import scipy.stats as stats
+
+def ks_normal_test(sample, mean, std_dev):
+    _, p_value = stats.kstest(sample, 'norm', args=(mean, std_dev))
+    return p_value
+
+def truncated_normal_pdf(x, mean, std_dev):
+    a = (0 - mean) / std_dev
+    b = np.inf
+    return stats.truncnorm.pdf(x, a, b, loc=mean, scale=std_dev)
+
+def lowest_mean_and_std(sample, threshold=0.05, step=0.1):
+    mean = np.mean(sample)
+    std_dev = np.std(sample)
+    while True:
+        p = ks_normal_test(sample, mean, std_dev)
+        if p < threshold:
+            return mean+step, std_dev
+        mean -= step
+
+def prob_under_for_std_dist(x, mean, std_dev):
+    if std_dev == 0:
+        std_dev = 0.01
+    a = (0 - mean) / std_dev
+    b = np.inf
+    return stats.truncnorm.cdf(x, a, b, loc=mean, scale=std_dev)
+
+def prob_over_for_std_dist(x, mean, std_dev):
+    return 1-prob_under_for_std_dist(x, mean, std_dev)
 
 todayDate = date.today()
 today = todayDate.strftime("%Y-%m-%d")
@@ -92,15 +121,22 @@ for stat in y_data:
             new_stats = new_stats_unsummed.sum(axis=1)
         expectedHits = old_stats>line
         actualHits = new_stats>line
-        print({"games": int(expectedHits.shape[0]), "hit": int(expectedHits.sum()), "percentage": float(expectedHits.sum()/expectedHits.shape[0])})
+        sample = old_stats.values
+        print(sample)
+        lowest_mean, std_dev = lowest_mean_and_std(sample)
+        actual_mean = np.mean(sample)
+        print(f"Line: {line}")
+        p_value = ks_normal_test(old_stats, lowest_mean, std_dev)
+        probability = prob_over_for_std_dist(line, lowest_mean, std_dev)
+        print({"games": int(expectedHits.shape[0]), "hit": int(expectedHits.sum()), "percentage": probability})
         print(actualHits.sum(), "/", actualHits.shape[0])
         # print("expected percentage", float(hitLine.sum()/hitLine.shape[0]))
         # print("actual outcome", hit_or_not.sum(), "/", hit_or_not.shape[0])
         if (actualHits.shape[0]>0):
             for i in range(actualHits.sum()):
-                analytics.append({"percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+                analytics.append({"percentage": probability, "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
             for i in range(actualHits.shape[0]-actualHits.sum()):
-                analytics.append({"percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+                analytics.append({"percentage": probability, "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
     except Exception as e:      
         print("error", e)
 
