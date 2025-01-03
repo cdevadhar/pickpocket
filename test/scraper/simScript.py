@@ -1,5 +1,4 @@
 
-import math
 import json
 import os
 import pandas as pd
@@ -63,7 +62,7 @@ def find_player(id):
         if (player['id']==id):
             return player['attributes']['name']
     return None
-statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M"}
+statNameToAbbrev = {"Points" : "PTS", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST"}
 STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV', 'GAME_DATE']
 
 if not os.path.exists("playerData/"+today):
@@ -192,9 +191,10 @@ for i in range(20):
     print("Expected ", prob_lower, " to ", prob_higher)
     print("Actual", hits/total, hits, "/", total)
     expected2.append((prob_lower+prob_higher)/2)
-    actual2.append(hits/total) 
-
-plt.scatter(np.array(expected), np.array(actual))
-plt.scatter(np.array(expected2), np.array(actual2))
+    actual2.append(hits/total)
+    
+plt.scatter(np.array(expected), np.array(actual), label="Using Normal Dist")
+plt.scatter(np.array(expected2), np.array(actual2), label="Raw Data")
 plt.plot([0, 1], [0, 1])
+plt.legend()
 plt.show()
