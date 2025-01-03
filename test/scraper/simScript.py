@@ -5,52 +5,46 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from datetime import date
+from datetime import date, datetime
 import time
 from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 
-today = date.today()
+todayDate = date.today()
+today = todayDate.strftime("%Y-%m-%d")
 # os.mkdir("playerData/"+str(today))
 
 all_jsons = os.listdir('lineJsons')
 paths = [os.path.join("lineJsons", file) for file in all_jsons]
 latest_lines = max(paths, key=os.path.getmtime)
-todays_lines = os.path.join("lineJsons", today)
+todays_lines = os.path.join("lineJsons", today+'.json')
 
 with open(latest_lines) as f:
     jsonFile = json.load(f)
     y_data = jsonFile['data']
     y_included = jsonFile['included']
 
-with open(todays_lines) as f:
-    jsonFile = json.load(f)
-    t_data = jsonFile['data']
-    t_included = jsonFile['included']
 
 included_players = []
 for inc in y_included:
     if (inc['type']=='new_player'):
         included_players.append(inc)
-for inc in t_included:
-    if (inc['type']=='new_player'):
-        if inc not in included_players:
-            included_players.append(inc)
-
 def find_player(id):
     for player in included_players:
         if (player['id']==id):
             return player['attributes']['name']
     return None
 statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M"}
-STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV']
+STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV', 'GAME_DATE']
 
+if not os.path.exists("playerData/"+today):
+    os.mkdir('playerData/'+today)
 # get data for all players involved in yesterdays or todays lines (will build up over time to basically every nba player)
 for player in included_players:
     try:
         player_name = player['attributes']['name']
         if os.path.exists('playerData/'+today+'/'+player_name+'.csv'):
-            print("already exists")
+            print("player data already exists")
             continue
         print(player_name)
         if ('+' in player_name):
@@ -67,43 +61,54 @@ for player in included_players:
 # check yesterday's hit rates
 analytics = []
 for stat in y_data:
-    # print(stat)
+    print(stat)
+    start_time = stat['attributes']['start_time']
+    start_date = pd.to_datetime(start_time).date()
     player_name = find_player(stat['relationships']['new_player']['data']['id'])
     try:
         if stat['attributes']['stat_type'] not in statNameToAbbrev:
             continue
-        print (player_name)
-        print(stat['attributes']['line_score'], stat['attributes']['stat_type'])
-        yesterday_stats = pd.read_csv('playerData/'+os.path.basename(latest_lines)+'/'+player_name+'.csv')
+        # print (player_name)
+        # print(stat['attributes']['line_score'], stat['attributes']['stat_type'])
+        line = float(stat['attributes']['line_score'])
         today_stats = pd.read_csv('playerData/'+today+'/'+player_name+'.csv')
+        today_stats['GAME_DATE'] = pd.to_datetime(today_stats['GAME_DATE']).dt.date
+        # print(today_stats)
+        prediction_stats = today_stats.loc[today_stats['GAME_DATE'] < start_date]
+        # print(prediction_stats)
+        result_stats = today_stats.loc[today_stats['GAME_DATE'] >= start_date]
+        # print(result_stats)
         statType = statNameToAbbrev[stat['attributes']['stat_type']]
-        stats = 0
+        # stats = 0
         if statType in STATS_LIST:
-            stats = yesterday_stats[statType]
-            hits = today_stats[statType]
+            old_stats = prediction_stats[statType]
+            new_stats = result_stats[statType]
         elif "+" in statType:
             statType = statType.split("+")
-            yesterday_stats = yesterday_stats[statType]
-            hits_unsummed = today_stats[statType]
-            stats = yesterday_stats.sum(axis=1)
-            hits = hits_unsummed.sum(axis=1)
-        hitLine = stats>float(stat['attributes']['line_score'])
-        # actualHits = hits>float(stat['attributes']['line_score'])
-        # print({"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0])})
-        # print(hit_stats)
-        hit_or_not = hits>float(stat['attributes']['line_score'])
-        print("expected percentage", float(hitLine.sum()/hitLine.shape[0]))
-        print("actual outcome", hit_or_not.sum(), "/", hit_or_not.shape[0])
-        if (hit_or_not.shape[0]>0):
-            for i in range(hit_or_not.sum()):
-                analytics.append({"percentage": float(hitLine.sum()/hitLine.shape[0]), "hit": 1, "playerProp": player_name+" "+str(stat['attributes']['line_score'])+" "+str(stat['attributes']['stat_type'])})
-                
-            for i in range(hit_or_not.shape[0]-hit_or_not.sum()):
-                analytics.append({"percentage": float(hitLine.sum()/hitLine.shape[0]), "hit": 0, "playerProp": player_name+" "+str(stat['attributes']['line_score'])+" "+str(stat['attributes']['stat_type'])})
+            old_stats_unsummed = prediction_stats[statType]
+            old_stats = old_stats_unsummed.sum(axis=1)
+
+            new_stats_unsummed = result_stats[statType]
+            new_stats = new_stats_unsummed.sum(axis=1)
+        expectedHits = old_stats>line
+        actualHits = new_stats>line
+        print({"games": int(expectedHits.shape[0]), "hit": int(expectedHits.sum()), "percentage": float(expectedHits.sum()/expectedHits.shape[0])})
+        print(actualHits.sum(), "/", actualHits.shape[0])
+        # print("expected percentage", float(hitLine.sum()/hitLine.shape[0]))
+        # print("actual outcome", hit_or_not.sum(), "/", hit_or_not.shape[0])
+        if (actualHits.shape[0]>0):
+            for i in range(actualHits.sum()):
+                analytics.append({"percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+            for i in range(actualHits.shape[0]-actualHits.sum()):
+                analytics.append({"percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
     except Exception as e:      
         print("error", e)
 
+
 sorted_analytics = sorted(analytics, key=lambda x: x['percentage'])
+print(len(sorted_analytics))
+print(len(y_data))
+print(sorted_analytics)
 expected = []
 actual = []
 
@@ -132,4 +137,5 @@ for i in range(20):
 print(reasonable)
 
 plt.scatter(np.array(expected), np.array(actual))
+plt.plot([0, 1], [0, 1])
 plt.show()
