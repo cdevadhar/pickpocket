@@ -217,6 +217,56 @@ const mutationObserver = new MutationObserver(() => {
         console.log("HERE")
         console.log(data)
 
+
+        const midCaseAnalytics = document.createElement("div");
+        midCaseAnalytics.style.display = "flex";
+        midCaseAnalytics.style.padding = "0px 5px";
+        payoutArea.append(midCaseAnalytics);
+
+        midEV = document.createElement("div");
+        const displayMidEV = Math.round((data['midEV'] + Number.EPSILON) * 100) / 100;
+        midEV.textContent = `Moderate Est. Expected Multiplier: ${displayMidEV}X`;
+        midEV.classList.add("mid-expected-value");
+        midEV.style.padding = "10px"; 
+        midEV.style.border = 'medium solid BLACK';
+        midEV.style.borderRadius = "10px";
+        midEV.style.flex = 1;
+        if (displayMidEV < 1) {
+            midEV.style.backgroundColor='#e43245';
+            midEV.style.color = '#f0f0f7';
+        } else if (displayMidEV < 1.1) {
+            midEV.style.backgroundColor='#ffbb33';
+            midEV.style.color = 'BLACK';
+        }
+        else {
+            midEV.style.backgroundColor='#6eff00';
+            midEV.style.color = 'BLACK';
+        }
+        // console.log(data["payoutodds"]);
+        midCaseAnalytics.append(midEV);
+
+        midWR = document.createElement("div");
+        const displaymidWR = Math.round((midWinRate + Number.EPSILON) * 10000) / 100;
+        midWR.textContent = `Moderate Est. Break-Even Rate: ${displaymidWR}%`;
+        midWR.classList.add("mid-win-rate");
+        midWR.style.padding = "10px"; 
+        midWR.style.border = 'medium solid BLACK';
+        midWR.style.borderRadius = "10px";
+        midWR.style.flex = 1;
+        if (displaymidWR < 50) {
+            midWR.style.backgroundColor='#e43245';
+            midWR.style.color = '#f0f0f7';
+        } else if (displaymidWR < 60) {
+            midWR.style.backgroundColor='#ffbb33';
+            midWR.style.color = 'BLACK';
+        }
+        else {
+            midWR.style.backgroundColor='#6eff00';
+            midWR.style.color = 'BLACK';
+        }
+        // console.log(data["payoutodds"]);
+        midCaseAnalytics.append(midWR);
+
         const worstCaseAnalytics = document.createElement("div");
         worstCaseAnalytics.style.display = "flex";
         worstCaseAnalytics.style.padding = "0px 5px";

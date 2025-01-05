@@ -7,7 +7,7 @@ import pandas as pd
 from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 
-with open('nbaData.json') as f:
+with open('lineJsons/testing.json') as f:
     jsonFile = json.load(f)
     data = jsonFile['data']
     included = jsonFile['included']
@@ -23,14 +23,14 @@ def find_player(id):
             return player['attributes']['name']
     return None
 
-statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M"}
+statNameToAbbrev = {"Points" : "PTS", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST"}
 STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV']
 player_gamelogs = {}
 count = 0
 for player in included_players:
     try:
         player_name = player['attributes']['name']
-        if os.path.exists('playerDataCheck/'+player_name+'.csv'):
+        if os.path.exists('playerData/2025-01-05/'+player_name+'.csv'):
             print("already exists")
             continue
         print(player_name)
@@ -41,7 +41,7 @@ for player in included_players:
         gamelogs = playergamelogs.PlayerGameLogs(player_id_nullable=player_obj['id'], season_nullable="2024-25")
         queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
         player_gamelogs[player_name] = queried_stats
-        queried_stats.to_csv('playerDataCheck/'+player_name+'.csv', index=False)
+        queried_stats.to_csv('playerData/2025-01-05/'+player_name+'.csv', index=False)
         time.sleep(5)
     except Exception as e:
         print('error', e)
@@ -57,7 +57,7 @@ for stat in data:
             continue
         print (player_name)
         print(stat['attributes']['line_score'], stat['attributes']['stat_type'])
-        queried_stats = pd.read_csv('playerData/'+player_name+'.csv')
+        queried_stats = pd.read_csv('playerData/2025-01-05/'+player_name+'.csv')
         statType = statNameToAbbrev[stat['attributes']['stat_type']]
         stats = 0
         if statType in STATS_LIST:
@@ -84,6 +84,7 @@ demons = sorted(demons, key=lambda d: d['percentage'])
 print(len(standard))
 print(len(goblins))
 print(len(demons))
-print(standard[-20:])
-print(goblins[-20:])
-print(demons[-20:])
+for pick in standard[-20:]:
+    print(pick)
+# print(goblins[-20:])
+# print(demons[-20:])

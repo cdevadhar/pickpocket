@@ -19,7 +19,7 @@ def truncated_normal_pdf(x, mean, std_dev):
     b = np.inf
     return stats.truncnorm.pdf(x, a, b, loc=mean, scale=std_dev)
 
-def lowest_mean_and_std(sample, threshold=0.05, step=0.1):
+def lowest_mean_and_std(sample, threshold, step=0.1):
     mean = np.mean(sample)
     std_dev = np.std(sample)
     while True:
@@ -28,7 +28,7 @@ def lowest_mean_and_std(sample, threshold=0.05, step=0.1):
             return mean+step, std_dev
         mean -= step
 
-def highest_mean_and_std(sample, threshold=0.05, step=0.1):
+def highest_mean_and_std(sample, threshold, step=0.1):
     mean = np.mean(sample)
     std_dev = np.std(sample)
     while True:
@@ -136,13 +136,20 @@ def process_line(data, checking_last_game=False):
 
         ret = {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0]), "injurystatus": status}
         if "PTS" in statType:
-            lowest_mean, std_dev = lowest_mean_and_std(stats.values)
-            highest_mean, _ = highest_mean_and_std(stats.values)
+            wc_lowest_mean, wc_std_dev = lowest_mean_and_std(stats.values, 0.05)
+            wc_highest_mean, _ = highest_mean_and_std(stats.values, 0.05)
+
+            mc_lowest_mean, mc_std_dev = lowest_mean_and_std(stats.values, 0.2)
+            mc_highest_mean, _ = highest_mean_and_std(stats.values, 0.2)
+
             if data["pick"]=="more":
-                worstcase = prob_over_for_std_dist(float(data['line']), lowest_mean, std_dev)
+                worstcase = prob_over_for_std_dist(float(data['line']), wc_lowest_mean, wc_std_dev)
+                midcase = prob_over_for_std_dist(float(data['line']), mc_lowest_mean, mc_std_dev)
             else:
-                worstcase = prob_under_for_std_dist(float(data['line']), highest_mean, std_dev)
+                worstcase = prob_under_for_std_dist(float(data['line']), wc_highest_mean, wc_std_dev)
+                midcase = prob_under_for_std_dist(float(data['line']), mc_highest_mean, mc_std_dev)
             ret["worstcase"] = worstcase
+            ret["midcase"] = midcase
         return ret
 
     except Exception as e:
