@@ -10,6 +10,8 @@ from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 import scipy.stats as stats
 import sys
+import unicodedata
+
 
 def ks_normal_test(sample, mean, std_dev):
     _, p_value = stats.kstest(sample, 'norm', args=(mean, std_dev))
@@ -75,12 +77,28 @@ def find_player(id):
 statNameToAbbrev = {"Points" : "PTS", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST"}
 STATS_LIST = ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FTM', 'FGM', 'FG3M', 'TOV', 'GAME_DATE']
 
+def has_accent(word):
+    normalized = unicodedata.normalize('NFD', word)
+    return any(unicodedata.category(char) == 'Mn' for char in normalized)
+def remove_accents(word):
+    normalized = unicodedata.normalize('NFD', word)
+    return ''.join(char for char in normalized if unicodedata.category(char) != 'Mn')
+
+all_players = players.get_active_players()
+accented_players = {}
+for player in all_players:
+    if (has_accent(player['full_name'])):
+        no_accents = remove_accents(player['full_name'])
+        accented_players[no_accents] = player['full_name']
+
 if not os.path.exists("playerData/"+today):
     os.mkdir('playerData/'+today)
 # get data for all players involved in yesterdays or todays lines (will build up over time to basically every nba player)
 for player in included_players:
     try:
         player_name = player['attributes']['name']
+        if (player_name in accented_players):
+            player_name = accented_players[player_name]
         if os.path.exists('playerData/'+today+'/'+player_name+'.csv'):
             print("player data already exists")
             continue
