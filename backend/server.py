@@ -213,6 +213,17 @@ def process_parlay():
         worstPayoutOdds, worstEV = calc_evs(worstcases, payouts)
         ret["worstPayoutOdds"] = worstPayoutOdds
         ret["worstEV"] = worstEV
+
+        midcases = []
+        for prob in probabilities:
+            if "midcase" in prob:
+                midcases.append({"percentage": prob["midcase"]})
+            else:
+                return ret
+        midPayoutOdds, midEV = calc_evs(midcases, payouts)
+        ret["midPayoutOdds"] = midPayoutOdds
+        ret["midEV"] = midEV
+
         return ret
     except Exception as e:
         print(e)

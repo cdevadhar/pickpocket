@@ -128,6 +128,12 @@ const mutationObserver = new MutationObserver(() => {
         let worstWR = document.querySelector(".worst-win-rate");
         if (worstWR) worstWR.remove();
 
+        let midEV = document.querySelector(".mid-expected-value");
+        if (midEV) midEV.remove();
+
+        let midWR = document.querySelector(".mid-win-rate");
+        if (midWR) midWR.remove();
+
         if (payouts.length == 0 || !selectedPayout) {
             return;
         }
@@ -139,6 +145,7 @@ const mutationObserver = new MutationObserver(() => {
 
         let winrate = 0;
         let worstWinRate = 0;
+        let midWinRate = 0;
         const payoutsElements = selectedPayout.querySelectorAll("div.payout");
         for (let i = 0; i < payoutsElements.length; i++) {
             const odds = document.createElement("div");
@@ -158,6 +165,9 @@ const mutationObserver = new MutationObserver(() => {
                 if ("worstPayoutOdds" in data){
                     worstWinRate += data['worstPayoutOdds'][i];
                 }
+                if ("midPayoutOdds" in data){
+                    midWinRate += data['midPayoutOdds'][i];
+                }
             }
         }
 
@@ -168,7 +178,7 @@ const mutationObserver = new MutationObserver(() => {
 
         ev = document.createElement("div");
         const displayEV = Math.round((data['ev'] + Number.EPSILON) * 100) / 100;
-        ev.textContent = `Raw Expected Multiplier: ${displayEV}X`;
+        ev.textContent = `Raw Expected Multiplier (EM): ${displayEV}X`;
         ev.classList.add("expected-value");
         ev.style.padding = "10px"; 
         ev.style.border = 'medium solid BLACK';
@@ -190,7 +200,7 @@ const mutationObserver = new MutationObserver(() => {
 
         wr = document.createElement("div");
         const displayWR = Math.round((winrate + Number.EPSILON) * 10000) / 100;
-        wr.textContent = `Raw Break-Even Rate: ${displayWR}%`;
+        wr.textContent = `Raw Break-Even Rate (BER): ${displayWR}%`;
         wr.classList.add("win-rate");
         wr.style.padding = "10px"; 
         wr.style.border = 'medium solid BLACK';
@@ -214,9 +224,8 @@ const mutationObserver = new MutationObserver(() => {
             return;
         }
 
-        console.log("HERE")
-        console.log(data)
-
+        // console.log("HERE")
+        // console.log(data)
 
         const midCaseAnalytics = document.createElement("div");
         midCaseAnalytics.style.display = "flex";
@@ -225,7 +234,7 @@ const mutationObserver = new MutationObserver(() => {
 
         midEV = document.createElement("div");
         const displayMidEV = Math.round((data['midEV'] + Number.EPSILON) * 100) / 100;
-        midEV.textContent = `Moderate Est. Expected Multiplier: ${displayMidEV}X`;
+        midEV.textContent = `Moderately Adjusted EM: ${displayMidEV}X`;
         midEV.classList.add("mid-expected-value");
         midEV.style.padding = "10px"; 
         midEV.style.border = 'medium solid BLACK';
@@ -247,7 +256,7 @@ const mutationObserver = new MutationObserver(() => {
 
         midWR = document.createElement("div");
         const displaymidWR = Math.round((midWinRate + Number.EPSILON) * 10000) / 100;
-        midWR.textContent = `Moderate Est. Break-Even Rate: ${displaymidWR}%`;
+        midWR.textContent = `Moderately Adjusted BER: ${displaymidWR}%`;
         midWR.classList.add("mid-win-rate");
         midWR.style.padding = "10px"; 
         midWR.style.border = 'medium solid BLACK';
@@ -274,7 +283,7 @@ const mutationObserver = new MutationObserver(() => {
 
         worstEV = document.createElement("div");
         const displayWorstEV = Math.round((data['worstEV'] + Number.EPSILON) * 100) / 100;
-        worstEV.textContent = `Worst-Case Expected Multiplier: ${displayWorstEV}X`;
+        worstEV.textContent = `Worst-Case Adjusted EM: ${displayWorstEV}X`;
         worstEV.classList.add("worst-expected-value");
         worstEV.style.padding = "10px"; 
         worstEV.style.border = 'medium solid BLACK';
@@ -296,7 +305,7 @@ const mutationObserver = new MutationObserver(() => {
 
         worstWR = document.createElement("div");
         const displayWorstWR = Math.round((worstWinRate + Number.EPSILON) * 10000) / 100;
-        worstWR.textContent = `Worst-Case Break-Even Rate: ${displayWorstWR}%`;
+        worstWR.textContent = `Worst-Case Adjusted BER: ${displayWorstWR}%`;
         worstWR.classList.add("worst-win-rate");
         worstWR.style.padding = "10px"; 
         worstWR.style.border = 'medium solid BLACK';
