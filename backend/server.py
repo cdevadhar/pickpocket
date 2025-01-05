@@ -7,6 +7,45 @@ import traceback
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import numpy as np
+import scipy.stats as stats
+
+def ks_normal_test(sample, mean, std_dev):
+    _, p_value = stats.kstest(sample, 'norm', args=(mean, std_dev))
+    return p_value
+
+def truncated_normal_pdf(x, mean, std_dev):
+    a = (0 - mean) / std_dev
+    b = np.inf
+    return stats.truncnorm.pdf(x, a, b, loc=mean, scale=std_dev)
+
+def lowest_mean_and_std(sample, threshold=0.05, step=0.1):
+    mean = np.mean(sample)
+    std_dev = np.std(sample)
+    while True:
+        p = ks_normal_test(sample, mean, std_dev)
+        if p < threshold:
+            return mean+step, std_dev
+        mean -= step
+
+def highest_mean_and_std(sample, threshold=0.05, step=0.1):
+    mean = np.mean(sample)
+    std_dev = np.std(sample)
+    while True:
+        p = ks_normal_test(sample, mean, std_dev)
+        if p < threshold:
+            return mean+step, std_dev
+        mean += step
+
+def prob_under_for_std_dist(x, mean, std_dev):
+    if std_dev == 0:
+        std_dev = 0.01
+    a = (0 - mean) / std_dev
+    b = np.inf
+    return stats.truncnorm.cdf(x, a, b, loc=mean, scale=std_dev)
+
+def prob_over_for_std_dist(x, mean, std_dev):
+    return 1-prob_under_for_std_dist(x, mean, std_dev)
 
 app = Flask(__name__)
 CORS(app)
@@ -94,8 +133,17 @@ def process_line(data, checking_last_game=False):
         status = "Healthy"
         if NBA_ABBREVIATIONS[data["team"]] in injuries and data["player"] in injuries[NBA_ABBREVIATIONS[data["team"]]]:
             status = injuries[NBA_ABBREVIATIONS[data["team"]]][data["player"]]
-        
-        return {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0]), "injurystatus": status}
+
+        ret = {"games": int(hitLine.shape[0]), "hit": int(hitLine.sum()), "percentage": float(hitLine.sum()/hitLine.shape[0]), "injurystatus": status}
+        if "PTS" in statType:
+            lowest_mean, std_dev = lowest_mean_and_std(stats.values)
+            highest_mean, _ = highest_mean_and_std(stats.values)
+            if data["pick"]=="more":
+                worstcase = prob_over_for_std_dist(float(data['line']), lowest_mean, std_dev)
+            else:
+                worstcase = prob_under_for_std_dist(float(data['line']), highest_mean, std_dev)
+            ret["worstcase"] = worstcase
+        return ret
 
     except Exception as e:
         print(e)
@@ -103,7 +151,7 @@ def process_line(data, checking_last_game=False):
     
 @app.route('/checkHit', methods=['POST'])
 def check_hit():
-    process_line(request.get_json(), checking_last_game=True)
+    return process_line(request.get_json(), checking_last_game=True)
     
 def update_injuries():
     global lastInjuryUpdate
@@ -146,31 +194,46 @@ def process_parlay():
         payouts = data["payouts"]
         if len(payouts) == 0:
             return {"probabilities": probabilities, "injurystatuses": injuryStatuses}
-        payoutOdds = [0 for _ in payouts]
-        ev = 0
-        for bitshit in range(0, 2**len(probabilities)):
-            hits = 0
-            currentProb = 1
-            for j in range (0, len(probabilities)):
-                if (bitshit & 1):
-                    currentProb = currentProb * probabilities[j]['percentage']
-                    hits+=1
-                else:
-                    # print(currentProb)
-                    # print(probabilities[j])
-                    currentProb = currentProb * (1-probabilities[j]['percentage'])
-                bitshit = bitshit >> 1
-            i = len(probabilities)-hits
-            if (i<len(payouts)):
-                payoutOdds[i] += currentProb
-                ev += currentProb*payouts[i]
-            # print({"hits": hits, "probability": currentProb})
-        return {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev, "injurystatuses": injuryStatuses}
+        payoutOdds, ev = calc_evs(probabilities, payouts)
+        ret = {"probabilities": probabilities, "payoutodds": payoutOdds, "ev": ev, "injurystatuses": injuryStatuses}
+
+        worstcases = []
+        for prob in probabilities:
+            if "worstcase" in prob:
+                worstcases.append({"percentage": prob["worstcase"]})
+            else:
+                return ret
+        worstPayoutOdds, worstEV = calc_evs(worstcases, payouts)
+        ret["worstPayoutOdds"] = worstPayoutOdds
+        ret["worstEV"] = worstEV
+        return ret
     except Exception as e:
         print(e)
         tb = traceback.extract_tb(e.__traceback__)
         print("Exception occurred on line", tb[-1].lineno)
         return jsonify({"error": str(e)}), 500
+    
+def calc_evs(probabilities, payouts):
+    payoutOdds = [0 for _ in payouts]
+    ev = 0
+    for bitshit in range(0, 2**len(probabilities)):
+        hits = 0
+        currentProb = 1
+        for j in range (0, len(probabilities)):
+            if (bitshit & 1):
+                currentProb = currentProb * probabilities[j]['percentage']
+                hits+=1
+            else:
+                # print(currentProb)
+                # print(probabilities[j])
+                currentProb = currentProb * (1-probabilities[j]['percentage'])
+            bitshit = bitshit >> 1
+        i = len(probabilities)-hits
+        if (i<len(payouts)):
+            payoutOdds[i] += currentProb
+            ev += currentProb*payouts[i]
+        # print({"hits": hits, "probability": currentProb})
+    return payoutOdds, ev
 
 if __name__ == '__main__':
     # Run the Flask server
