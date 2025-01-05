@@ -9,6 +9,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import scipy.stats as stats
+from datetime import date, timedelta
+import os
+import pandas as pd
 
 def ks_normal_test(sample, mean, std_dev):
     _, p_value = stats.kstest(sample, 'norm', args=(mean, std_dev))
@@ -108,9 +111,25 @@ def process_line(data, checking_last_game=False):
         playerName = data['player']
         if (playerName in accented_players):
             playerName = accented_players[playerName]
-        player = players.find_players_by_full_name(playerName)[0]
-        gamelogs = playergamelogs.PlayerGameLogs(player_id_nullable=player['id'], season_nullable="2024-25")
-        queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
+        todayDate = date.today()
+        today = todayDate.strftime("%Y-%m-%d")
+        playerDataDirectory = "../test/scraper/playerData/"+today
+        playerDataFile = playerDataDirectory+"/"+playerName+".csv"
+        queried_stats = None
+        print(playerDataDirectory)
+        if (os.path.exists(playerDataFile)):
+            print("stats are already saved")
+            print(playerDataFile)
+            queried_stats = pd.read_csv(playerDataFile)
+        else:
+            print("requesting")
+            player = players.find_players_by_full_name(playerName)[0]
+            gamelogs = playergamelogs.PlayerGameLogs(player_id_nullable=player['id'], season_nullable="2024-25")
+            queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
+            if (os.path.exists(playerDataDirectory)):
+                print("saving to a file")
+                # save to a file
+                queried_stats.to_csv(playerDataDirectory+'/'+playerName+'.csv', index=False)
         stats = 0
         statType = data['statType']
         if statType == "FS":
