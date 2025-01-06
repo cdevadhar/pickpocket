@@ -5,10 +5,12 @@ import numpy as np
 import math
 
 # SIMMING STANDARD ONLY PICKS
-profit_threshold = 0.574456
+profit_threshold = 0.5733
 # simulating parlays on each day
-money = 1000
-money_daily = [1000]
+money_power = 1000
+money_daily_power = [1000]
+money_flex = 1000
+money_daily_flex = [1000]
 days = [1]
 day = 2
 for filename in os.listdir('analyticsFiles/standardOnly'):
@@ -39,14 +41,25 @@ for filename in os.listdir('analyticsFiles/standardOnly'):
         totalParlays = math.comb(len(keys), 2)
         moneyIn = totalParlays*5
         moneyBack = parlaysHit*15
-        money = money-moneyIn+moneyBack
-        print("Money left:", money)
-    money_daily.append(money)
+        money_power = money_power-moneyIn+moneyBack
+
+        totalFlexes = math.comb(len(keys), 3)
+        flexesHit3 = math.comb(numHit, 3)
+        flexesHit2 = parlaysHit*(len(keys)-numHit)
+        moneyInFlex = totalFlexes*5
+        moneyBackFlex = flexesHit3*2.25+flexesHit2*1.25
+        money_flex = money_flex-moneyInFlex+moneyBackFlex
+        print("Money left for power:", money_power)
+        print("Money left for flex:", money_flex)
+    money_daily_power.append(money_power)
+    money_daily_flex.append(money_flex)
     days.append(day)
     day+=1
-plt.plot(days, money_daily)
+plt.plot(days, money_daily_power)
+plt.plot(days, money_daily_flex)
 plt.xlabel("Day of simulation")
 plt.ylabel("Money")
+plt.legend(["Power", "Flex"])
 plt.show()
 # plotting expected vs actual for all
 all_analytics = []
@@ -55,7 +68,7 @@ for filename in os.listdir('analyticsFiles/standardOnly'):
     analytics = json.load(open(f))
     all_analytics.extend(analytics)
 
-sorted_analytics = sorted(all_analytics, key=lambda x: x['lower_percentage_over'])
+sorted_analytics = sorted(all_analytics, key=lambda x: x['lower_percentage_under'])
 sorted_analytics2 = sorted(all_analytics, key=lambda x: x['emp_percentage'])
 
 expected = []
@@ -72,9 +85,9 @@ for i in range(20):
     total = 0
     hits = 0
     for result in sorted_analytics:
-        if (result['lower_percentage_over']>prob_higher):
+        if (result['lower_percentage_under']>prob_higher):
             break
-        if (result['lower_percentage_over']<prob_lower):
+        if (result['lower_percentage_under']<prob_lower):
             continue
         total+=1
         if (result["hit"]==1):
@@ -88,7 +101,7 @@ for i in range(20):
 
 plt.scatter(np.array(expected), np.array(actual))
 plt.scatter(np.array(expected2), np.array(actual2))
-plt.plot([0, 1], [0, 1])
-plt.plot([0, 1], [profit_threshold, profit_threshold])
+plt.plot([0, 1], [1, 0])
+plt.plot([0, 1], [1-profit_threshold, 1-profit_threshold])
 plt.legend(['Worst case prediction vs actual results', 'Threshold for profit'])
 plt.show()
