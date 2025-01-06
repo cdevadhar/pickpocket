@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 # SIMMING STANDARD ONLY PICKS
-profit_threshold = 0.5733
+profit_threshold = 0.6
 # simulating parlays on each day
 money_power = 1000
 money_daily_power = [1000]
@@ -50,16 +50,16 @@ for filename in os.listdir('analyticsFiles/standardOnly'):
         moneyBackFlex = flexesHit3*2.25+flexesHit2*1.25
         money_flex = money_flex-moneyInFlex+moneyBackFlex
         print("Money left for power:", money_power)
-        print("Money left for flex:", money_flex)
+        # print("Money left for flex:", money_flex)
     money_daily_power.append(money_power)
     money_daily_flex.append(money_flex)
     days.append(day)
     day+=1
 plt.plot(days, money_daily_power)
-plt.plot(days, money_daily_flex)
+# plt.plot(days, money_daily_flex)
 plt.xlabel("Day of simulation")
 plt.ylabel("Money")
-plt.legend(["Power", "Flex"])
+# plt.legend(["Power", "Flex"])
 plt.show()
 # plotting expected vs actual for all
 all_analytics = []
