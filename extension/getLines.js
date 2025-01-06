@@ -18,6 +18,53 @@ function arraysEqual(a, b) {
     return true;
 }
 
+
+function evBox(data, key, ev, analytics) {
+    ev = document.createElement("div");
+    const displayEV = Math.round((data[key] + Number.EPSILON) * 100) / 100;
+    ev.textContent = `Raw Expected Multiplier (EM): ${displayEV}X`;
+    ev.classList.add("expected-value");
+    ev.style.padding = "10px"; 
+    ev.style.border = 'medium solid BLACK';
+    ev.style.borderRadius = "10px";
+    ev.style.flex = 1;
+    if (displayEV < 1) {
+        ev.style.backgroundColor='#e43245';
+        ev.style.color = '#f0f0f7';
+    } else if (displayEV < 1.1) {
+        ev.style.backgroundColor='#ffbb33';
+        ev.style.color = 'BLACK';
+    }
+    else {
+        ev.style.backgroundColor='#6eff00';
+        ev.style.color = 'BLACK';
+    }
+    analytics.append(ev);
+}
+
+function wrBox(winrate, wr, analytics) {
+    wr = document.createElement("div");
+    const displayWR = Math.round((winrate + Number.EPSILON) * 10000) / 100;
+    wr.textContent = `Raw Break-Even Rate (BER): ${displayWR}%`;
+    wr.classList.add("win-rate");
+    wr.style.padding = "10px"; 
+    wr.style.border = 'medium solid BLACK';
+    wr.style.borderRadius = "10px";
+    wr.style.flex = 1;
+    if (displayWR < 50) {
+        wr.style.backgroundColor='#e43245';
+        wr.style.color = '#f0f0f7';
+    } else if (displayWR < 60) {
+        wr.style.backgroundColor='#ffbb33';
+        wr.style.color = 'BLACK';
+    }
+    else {
+        wr.style.backgroundColor='#6eff00';
+        wr.style.color = 'BLACK';
+    }
+    analytics.append(wr);
+}
+
 const statNameToAbbrev = {"Points" : "PTS", "Rebounds": "REB", "Assists": "AST", "Blks+Stls": "BLK+STL", "Rebs+Asts": "REB+AST", "Pts+Asts": "PTS+AST", "Pts+Rebs": "PTS+REB", "Pts+Rebs+Asts": "PTS+REB+AST", "Blocked Shots": "BLK", "Steals": "STL", "Turnovers": "TOV", "Free Throws Made": "FTM", "FG Made": "FGM", "3-PT Made": "FG3M", "3-PT Attempted": "FG3A", "FT Attempted": "FTA", "FG Attempted": "FGA", "Offensive Rebounds": "OREB", "Defensive Rebounds": "DREB", "Fantasy Score": "FS"}
 
 const mutationObserver = new MutationObserver(() => {
@@ -176,154 +223,28 @@ const mutationObserver = new MutationObserver(() => {
         analytics.style.padding = "0px 5px";
         payoutArea.append(analytics);
 
-        ev = document.createElement("div");
-        const displayEV = Math.round((data['ev'] + Number.EPSILON) * 100) / 100;
-        ev.textContent = `Raw Expected Multiplier (EM): ${displayEV}X`;
-        ev.classList.add("expected-value");
-        ev.style.padding = "10px"; 
-        ev.style.border = 'medium solid BLACK';
-        ev.style.borderRadius = "10px";
-        ev.style.flex = 1;
-        if (displayEV < 1) {
-            ev.style.backgroundColor='#e43245';
-            ev.style.color = '#f0f0f7';
-        } else if (displayEV < 1.1) {
-            ev.style.backgroundColor='#ffbb33';
-            ev.style.color = 'BLACK';
-        }
-        else {
-            ev.style.backgroundColor='#6eff00';
-            ev.style.color = 'BLACK';
-        }
-        // console.log(data["payoutodds"]);
-        analytics.append(ev);
-
-        wr = document.createElement("div");
-        const displayWR = Math.round((winrate + Number.EPSILON) * 10000) / 100;
-        wr.textContent = `Raw Break-Even Rate (BER): ${displayWR}%`;
-        wr.classList.add("win-rate");
-        wr.style.padding = "10px"; 
-        wr.style.border = 'medium solid BLACK';
-        wr.style.borderRadius = "10px";
-        wr.style.flex = 1;
-        if (displayWR < 50) {
-            wr.style.backgroundColor='#e43245';
-            wr.style.color = '#f0f0f7';
-        } else if (displayWR < 60) {
-            wr.style.backgroundColor='#ffbb33';
-            wr.style.color = 'BLACK';
-        }
-        else {
-            wr.style.backgroundColor='#6eff00';
-            wr.style.color = 'BLACK';
-        }
-        // console.log(data["payoutodds"]);
-        analytics.append(wr);
+        evBox(data, 'ev', ev, analytics);
+        wrBox(winrate, wr, analytics);
 
         if (!("worstEV" in data)) {
             return;
         }
-
-        // console.log("HERE")
-        // console.log(data)
 
         const midCaseAnalytics = document.createElement("div");
         midCaseAnalytics.style.display = "flex";
         midCaseAnalytics.style.padding = "0px 5px";
         payoutArea.append(midCaseAnalytics);
 
-        midEV = document.createElement("div");
-        const displayMidEV = Math.round((data['midEV'] + Number.EPSILON) * 100) / 100;
-        midEV.textContent = `Moderately Adjusted EM: ${displayMidEV}X`;
-        midEV.classList.add("mid-expected-value");
-        midEV.style.padding = "10px"; 
-        midEV.style.border = 'medium solid BLACK';
-        midEV.style.borderRadius = "10px";
-        midEV.style.flex = 1;
-        if (displayMidEV < 1) {
-            midEV.style.backgroundColor='#e43245';
-            midEV.style.color = '#f0f0f7';
-        } else if (displayMidEV < 1.1) {
-            midEV.style.backgroundColor='#ffbb33';
-            midEV.style.color = 'BLACK';
-        }
-        else {
-            midEV.style.backgroundColor='#6eff00';
-            midEV.style.color = 'BLACK';
-        }
-        // console.log(data["payoutodds"]);
-        midCaseAnalytics.append(midEV);
-
-        midWR = document.createElement("div");
-        const displaymidWR = Math.round((midWinRate + Number.EPSILON) * 10000) / 100;
-        midWR.textContent = `Moderately Adjusted BER: ${displaymidWR}%`;
-        midWR.classList.add("mid-win-rate");
-        midWR.style.padding = "10px"; 
-        midWR.style.border = 'medium solid BLACK';
-        midWR.style.borderRadius = "10px";
-        midWR.style.flex = 1;
-        if (displaymidWR < 50) {
-            midWR.style.backgroundColor='#e43245';
-            midWR.style.color = '#f0f0f7';
-        } else if (displaymidWR < 60) {
-            midWR.style.backgroundColor='#ffbb33';
-            midWR.style.color = 'BLACK';
-        }
-        else {
-            midWR.style.backgroundColor='#6eff00';
-            midWR.style.color = 'BLACK';
-        }
-        // console.log(data["payoutodds"]);
-        midCaseAnalytics.append(midWR);
+        evBox(data, 'midEV', midEV, midCaseAnalytics);
+        wrBox(midWinRate, midWR, midCaseAnalytics);
 
         const worstCaseAnalytics = document.createElement("div");
         worstCaseAnalytics.style.display = "flex";
         worstCaseAnalytics.style.padding = "0px 5px";
         payoutArea.append(worstCaseAnalytics);
 
-        worstEV = document.createElement("div");
-        const displayWorstEV = Math.round((data['worstEV'] + Number.EPSILON) * 100) / 100;
-        worstEV.textContent = `Worst-Case Adjusted EM: ${displayWorstEV}X`;
-        worstEV.classList.add("worst-expected-value");
-        worstEV.style.padding = "10px"; 
-        worstEV.style.border = 'medium solid BLACK';
-        worstEV.style.borderRadius = "10px";
-        worstEV.style.flex = 1;
-        if (displayWorstEV < 1) {
-            worstEV.style.backgroundColor='#e43245';
-            worstEV.style.color = '#f0f0f7';
-        } else if (displayWorstEV < 1.1) {
-            worstEV.style.backgroundColor='#ffbb33';
-            worstEV.style.color = 'BLACK';
-        }
-        else {
-            worstEV.style.backgroundColor='#6eff00';
-            worstEV.style.color = 'BLACK';
-        }
-        // console.log(data["payoutodds"]);
-        worstCaseAnalytics.append(worstEV);
-
-        worstWR = document.createElement("div");
-        const displayWorstWR = Math.round((worstWinRate + Number.EPSILON) * 10000) / 100;
-        worstWR.textContent = `Worst-Case Adjusted BER: ${displayWorstWR}%`;
-        worstWR.classList.add("worst-win-rate");
-        worstWR.style.padding = "10px"; 
-        worstWR.style.border = 'medium solid BLACK';
-        worstWR.style.borderRadius = "10px";
-        worstWR.style.flex = 1;
-        if (displayWorstWR < 50) {
-            worstWR.style.backgroundColor='#e43245';
-            worstWR.style.color = '#f0f0f7';
-        } else if (displayWorstWR < 60) {
-            worstWR.style.backgroundColor='#ffbb33';
-            worstWR.style.color = 'BLACK';
-        }
-        else {
-            worstWR.style.backgroundColor='#6eff00';
-            worstWR.style.color = 'BLACK';
-        }
-        // console.log(data["payoutodds"]);
-        worstCaseAnalytics.append(worstWR);
+        evBox(data, 'worstEV', worstEV, worstCaseAnalytics);
+        wrBox(worstWinRate, worstWR, worstCaseAnalytics);
 
     }).catch(err => {
         console.log(err)
