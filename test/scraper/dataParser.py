@@ -7,7 +7,7 @@ import pandas as pd
 from nba_api.stats.endpoints import playergamelogs
 from nba_api.stats.static import players
 
-with open('lineJsons/testing.json') as f:
+with open('lineJsons/2025-01-06.json') as f:
     jsonFile = json.load(f)
     data = jsonFile['data']
     included = jsonFile['included']
