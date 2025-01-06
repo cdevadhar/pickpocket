@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 all_analytics = []
-for filename in os.listdir('analyticsFiles'):
-    f = os.path.join('analyticsFiles', filename)
+for filename in os.listdir('analyticsFiles/all'):
+    f = os.path.join('analyticsFiles/all', filename)
     analytics = json.load(open(f))
     all_analytics.extend(analytics)
 
-sorted_analytics = sorted(all_analytics, key=lambda x: x['lower_percentage'])
+sorted_analytics = sorted(all_analytics, key=lambda x: x['lower_percentage_over'])
 sorted_analytics2 = sorted(all_analytics, key=lambda x: x['emp_percentage'])
 print(len(sorted_analytics))
 print(sorted_analytics)
@@ -27,9 +27,9 @@ for i in range(20):
     total = 0
     hits = 0
     for result in sorted_analytics:
-        if (result['lower_percentage']>prob_higher):
+        if (result['lower_percentage_over']>prob_higher):
             break
-        if (result['lower_percentage']<prob_lower):
+        if (result['lower_percentage_over']<prob_lower):
             continue
         total+=1
         if (result["hit"]==1):

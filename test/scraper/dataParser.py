@@ -30,7 +30,7 @@ count = 0
 for player in included_players:
     try:
         player_name = player['attributes']['name']
-        if os.path.exists('playerData/2025-01-05/'+player_name+'.csv'):
+        if os.path.exists('playerData/2025-01-06/'+player_name+'.csv'):
             print("already exists")
             continue
         print(player_name)
@@ -41,7 +41,7 @@ for player in included_players:
         gamelogs = playergamelogs.PlayerGameLogs(player_id_nullable=player_obj['id'], season_nullable="2024-25")
         queried_stats = gamelogs.get_data_frames()[0][STATS_LIST]
         player_gamelogs[player_name] = queried_stats
-        queried_stats.to_csv('playerData/2025-01-05/'+player_name+'.csv', index=False)
+        queried_stats.to_csv('playerData/2025-01-06/'+player_name+'.csv', index=False)
         time.sleep(5)
     except Exception as e:
         print('error', e)
@@ -57,7 +57,7 @@ for stat in data:
             continue
         print (player_name)
         print(stat['attributes']['line_score'], stat['attributes']['stat_type'])
-        queried_stats = pd.read_csv('playerData/2025-01-05/'+player_name+'.csv')
+        queried_stats = pd.read_csv('playerData/2025-01-06/'+player_name+'.csv')
         statType = statNameToAbbrev[stat['attributes']['stat_type']]
         stats = 0
         if statType in STATS_LIST:

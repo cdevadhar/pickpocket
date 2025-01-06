@@ -31,6 +31,15 @@ def lowest_mean_and_std(sample, threshold=0.05, step=0.1):
             return mean+step, std_dev
         mean -= step
 
+def highest_mean_and_std(sample, threshold=0.05, step=0.1):
+    mean = np.mean(sample)
+    std_dev = np.std(sample)
+    while True:
+        p = ks_normal_test(sample, mean, std_dev)
+        if p < threshold:
+            return mean - step, std_dev  # Return the last valid mean
+        mean += step
+
 def prob_under_for_std_dist(x, mean, std_dev):
     if std_dev == 0:
         std_dev = 0.01
@@ -116,6 +125,7 @@ for player in included_players:
 
 # check yesterday's hit rates
 analytics = []
+standardOnly = []
 for stat in y_data:
     print(stat)
     start_time = stat['attributes']['start_time']
@@ -151,26 +161,37 @@ for stat in y_data:
         sample = old_stats.values
         print(sample)
         lowest_mean, std_dev = lowest_mean_and_std(sample)
+        highest_mean, _ = highest_mean_and_std(sample)
         actual_mean = np.mean(sample)
         print(f"Line: {line}")
         p_value = ks_normal_test(old_stats, lowest_mean, std_dev)
-        probability = prob_over_for_std_dist(line, lowest_mean, std_dev)
-        print({"games": int(expectedHits.shape[0]), "hit": int(expectedHits.sum()), "percentage": probability})
+
+        probability_over = prob_over_for_std_dist(line, lowest_mean, std_dev)
+        probability_under = prob_under_for_std_dist(line, highest_mean, std_dev)
+        # print({"games": int(expectedHits.shape[0]), "hit": int(expectedHits.sum()), "percentage": probability_over})
         print(actualHits.sum(), "/", actualHits.shape[0])
         # print("expected percentage", float(hitLine.sum()/hitLine.shape[0]))
         # print("actual outcome", hit_or_not.sum(), "/", hit_or_not.shape[0])
         if (actualHits.shape[0]>0):
             for i in range(actualHits.sum()):
-                analytics.append({"lower_percentage": probability, "emp_percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+                analytics_obj = {"lower_percentage_over": probability_over, "lower_percentage_under": probability_under, "optimal_percentage": max(probability_over, probability_under), "emp_percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 1, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])}
+                analytics.append(analytics_obj)
+                if (stat['attributes']['odds_type']=='standard'):
+                    standardOnly.append(analytics_obj)
             for i in range(actualHits.shape[0]-actualHits.sum()):
-                analytics.append({"lower_percentage": probability, "emp_percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])})
+                analytics_obj = {"lower_percentage_over": probability_over, "lower_percentage_under": probability_under, "optimal_percentage": max(probability_over, probability_under), "emp_percentage": float(expectedHits.sum()/expectedHits.shape[0]), "hit": 0, "playerProp": player_name+" "+str(line)+" "+str(stat['attributes']['stat_type'])}
+                analytics.append(analytics_obj)
+                if (stat['attributes']['odds_type']=='standard'):
+                    standardOnly.append(analytics_obj)
     except Exception as e:      
         print("error", e)
 
-with open('analyticsFiles/'+today, 'w') as file:
+with open('analyticsFiles/all/'+today+'.json', 'w') as file:
     json.dump(analytics, file)
+with open('analyticsFiles/standardOnly/'+today+'.json', 'w') as file:
+    json.dump(standardOnly, file)
     
-sorted_analytics = sorted(analytics, key=lambda x: x['lower_percentage'])
+sorted_analytics = sorted(analytics, key=lambda x: x['lower_percentage_over'])
 sorted_analytics2 = sorted(analytics, key=lambda x: x['emp_percentage'])
 print(len(sorted_analytics))
 print(len(y_data))
@@ -178,8 +199,8 @@ print(sorted_analytics)
 expected = []
 actual = []
 
-expected2 = []
-actual2 = []
+# expected2 = []
+# actual2 = []
 
 reasonable = []
 
@@ -189,9 +210,9 @@ for i in range(20):
     total = 0
     hits = 0
     for result in sorted_analytics:
-        if (result['lower_percentage']>prob_higher):
+        if (result['lower_percentage_over']>prob_higher):
             break
-        if (result['lower_percentage']<prob_lower):
+        if (result['lower_percentage_over']<prob_lower):
             continue
         total+=1
         if (result["hit"]==1):
@@ -202,9 +223,31 @@ for i in range(20):
     print("Actual", hits/total, hits, "/", total)
     expected.append((prob_lower+prob_higher)/2)
     actual.append(hits/total)
-    
+
+print(len(standardOnly))
+print(len(analytics))
+sorted_standard = sorted(standardOnly, key=lambda x: x['lower_percentage_over'])
+print(sorted_standard)
+for i in range(20):
+    prob_lower = 0.05*i
+    prob_higher = 0.05*(i+1)
+    total = 0
+    hits = 0
+    for result in sorted_standard:
+        if (result['lower_percentage_over']>prob_higher):
+            break
+        if (result['lower_percentage_over']<prob_lower):
+            continue
+        total+=1
+        if (result["hit"]==1):
+            hits+=1
+    if (total==0):
+        continue
+    print("Expected ", prob_lower, " to ", prob_higher)
+    print("Actual", hits/total, hits, "/", total)
+
 plt.scatter(np.array(expected), np.array(actual), label="Using Normal Dist")
-plt.scatter(np.array(expected2), np.array(actual2), label="Raw Data")
+# plt.scatter(np.array(expected2), np.array(actual2), label="Raw Data")
 plt.plot([0, 1], [0, 1])
 plt.legend()
 plt.show()

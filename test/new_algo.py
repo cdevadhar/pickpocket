@@ -22,6 +22,15 @@ def lowest_mean_and_std(sample, threshold=0.05, step=0.1):
             return mean+step, std_dev
         mean -= step
 
+def highest_mean_and_std(sample, threshold=0.05, step=0.1):
+    mean = np.mean(sample)
+    std_dev = np.std(sample)
+    while True:
+        p = ks_normal_test(sample, mean, std_dev)
+        if p < threshold:
+            return mean - step, std_dev  # Return the last valid mean
+        mean += step
+
 def prob_under_for_std_dist(x, mean, std_dev):
     if std_dev == 0:
         std_dev = 0.01
