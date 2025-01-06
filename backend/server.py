@@ -37,7 +37,7 @@ def highest_mean_and_std(sample, threshold, step=0.1):
     while True:
         p = ks_normal_test(sample, mean, std_dev)
         if p < threshold:
-            return mean+step, std_dev
+            return mean-step, std_dev
         mean += step
 
 def prob_under_for_std_dist(x, mean, std_dev):
