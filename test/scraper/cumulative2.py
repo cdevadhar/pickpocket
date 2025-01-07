@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 # SIMMING STANDARD ONLY PICKS
-profit_threshold = 0.5744
+profit_threshold = 0.6
 # simulating parlays on each day
 money_power = 1000
 money_daily_power = [1000]
