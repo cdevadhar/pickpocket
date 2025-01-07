@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 # SIMMING STANDARD ONLY PICKS
-profit_threshold = 0.5744
+profit_threshold = 0.6
 # simulating parlays on each day
 money_power = 1000
 money_daily_power = [1000]
@@ -13,7 +13,10 @@ money_flex = 1000
 money_daily_flex = [1000]
 days = [1]
 day = 2
-for filename in os.listdir('analyticsFiles/standardOnly'):
+
+files = os.listdir('analyticsFiles/standardOnly')
+files = sorted(files)
+for filename in files:
     f = os.path.join('analyticsFiles/standardOnly', filename)
     analytics = json.load(open(f))
     players_taken = {}
@@ -49,7 +52,8 @@ for filename in os.listdir('analyticsFiles/standardOnly'):
         moneyInFlex = totalFlexes*5
         moneyBackFlex = flexesHit3*2.25+flexesHit2*1.25
         money_flex = money_flex-moneyInFlex+moneyBackFlex
-        print("Money left for power:", money_power)
+    print("Day: ", filename)
+    print("Money left for power:", money_power)
         # print("Money left for flex:", money_flex)
     money_daily_power.append(money_power)
     money_daily_flex.append(money_flex)

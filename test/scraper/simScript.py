@@ -227,8 +227,6 @@ for i in range(20):
         continue
     print("Expected ", prob_lower, " to ", prob_higher)
     print("Actual", hits/total, hits, "/", total)
-    expected.append((prob_lower+prob_higher)/2)
-    actual.append(hits/total)
 
 print(len(standardOnly))
 print(len(analytics))
@@ -251,6 +249,8 @@ for i in range(20):
         continue
     print("Expected ", prob_lower, " to ", prob_higher)
     print("Actual", hits/total, hits, "/", total)
+    expected.append((prob_lower+prob_higher)/2)
+    actual.append(hits/total)
 
 plt.scatter(np.array(expected), np.array(actual), label="Using Normal Dist")
 # plt.scatter(np.array(expected2), np.array(actual2), label="Raw Data")
