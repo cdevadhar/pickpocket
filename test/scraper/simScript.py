@@ -14,10 +14,14 @@ import unicodedata
 
 
 def ks_normal_test(sample, mean, std_dev):
+    if std_dev <= 0:
+        std_dev = 0.01
     _, p_value = stats.kstest(sample, 'norm', args=(mean, std_dev))
     return p_value
 
 def truncated_normal_pdf(x, mean, std_dev):
+    if std_dev <= 0:
+        std_dev = 0.01
     a = (0 - mean) / std_dev
     b = np.inf
     return stats.truncnorm.pdf(x, a, b, loc=mean, scale=std_dev)
@@ -162,6 +166,8 @@ for stat in y_data:
         print(sample)
         lowest_mean, std_dev = lowest_mean_and_std(sample)
         highest_mean, _ = highest_mean_and_std(sample)
+        if std_dev <= 0:
+            std_dev = 0.01
         actual_mean = np.mean(sample)
         print(f"Line: {line}")
         p_value = ks_normal_test(old_stats, lowest_mean, std_dev)
