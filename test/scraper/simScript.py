@@ -146,7 +146,7 @@ for stat in y_data:
         # print(today_stats)
         prediction_stats = today_stats.loc[today_stats['GAME_DATE'] < start_date]
         # print(prediction_stats)
-        result_stats = today_stats.loc[today_stats['GAME_DATE'] >= start_date]
+        result_stats = today_stats.loc[today_stats['GAME_DATE'] == start_date]
         # print(result_stats)
         statType = statNameToAbbrev[stat['attributes']['stat_type']]
         # stats = 0

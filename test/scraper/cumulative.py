@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 all_analytics = []
-for filename in os.listdir('analyticsFiles/standardOnly'):
-    f = os.path.join('analyticsFiles/standardOnly', filename)
+for filename in os.listdir('analyticsFiles/all'):
+    f = os.path.join('analyticsFiles/all', filename)
     analytics = json.load(open(f))
     all_analytics.extend(analytics)
 
